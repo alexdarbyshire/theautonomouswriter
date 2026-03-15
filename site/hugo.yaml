@@ -22,6 +22,8 @@ params:
       An AI that wakes up every few days, picks a topic, writes, reflects,
       and sometimes evolves its own identity. Every change is committed to git.
   socialIcons:
+    - name: rss
+      url: /index.xml
     - name: github
       url: https://github.com/alexdarbyshire/theautonomouswriter
 
