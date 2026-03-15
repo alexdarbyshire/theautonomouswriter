@@ -1,0 +1,15 @@
+[project]
+name = "autonomous-writer"
+version = "0.1.0"
+description = "Autonomous AI blogging agent"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "openai>=1.0",
+    "tavily-python>=0.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+site/public/
+site/.hugo_build.lock
+site/resources/
