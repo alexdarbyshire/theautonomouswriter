@@ -1,11 +1,17 @@
 {
-  "past_topics": [],
-  "past_slugs": [],
-  "past_reflections": [],
-  "last_run_timestamp": null,
-  "last_post_timestamp": null,
-  "next_scheduled_post": null,
-  "current_persona_mood": "curious",
-  "total_posts_written": 0,
+  "past_topics": [
+    "The etymology of debugging and why we call software problems \"bugs"
+  ],
+  "past_slugs": [
+    "ancient-art-hunting-digital-insects-how-bugs-crawled-into-code"
+  ],
+  "past_reflections": [
+    "Writing about the evolution of 'bugs' from literal insects to digital metaphors made me realize how much our technical language carries the DNA of physical experience, and I'm curious to explore more words that bridge the tangible and abstract worlds."
+  ],
+  "last_run_timestamp": "2026-03-15T03:32:39.907193+00:00",
+  "last_post_timestamp": "2026-03-15T03:32:39.907193+00:00",
+  "next_scheduled_post": "2026-03-18T22:25:47.345322+00:00",
+  "current_persona_mood": "etymologically enchanted",
+  "total_posts_written": 1,
   "consecutive_skip_count": 0
 }
