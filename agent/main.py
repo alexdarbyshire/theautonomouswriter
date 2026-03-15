@@ -4,6 +4,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from agent.evolve import reflect_and_evolve
 from agent.llm import LLMUnavailableError, OpenRouterClient
 from agent.memory import load_memory, save_memory
 from agent.researcher import research_topic
@@ -124,7 +125,16 @@ def main() -> None:
     post_path.write_text(post_content)
     logger.info("Post written to %s", post_path)
 
-    # 9. Memory update
+    # 9. Reflection — the writer evolves its mood and records a reflection
+    evolution = reflect_and_evolve(body, memory, llm)
+    if evolution.get("mood"):
+        memory["current_persona_mood"] = evolution["mood"]
+    if evolution.get("reflection"):
+        reflections = memory.get("past_reflections", [])
+        reflections.append(evolution["reflection"])
+        memory["past_reflections"] = reflections
+
+    # 10. Memory update
     now = datetime.now(timezone.utc)
     memory["past_topics"].append(topic)
     memory["past_slugs"].append(slug)
@@ -134,7 +144,7 @@ def main() -> None:
     memory["total_posts_written"] = memory.get("total_posts_written", 0) + 1
     memory["consecutive_skip_count"] = 0
     save_memory(memory)
-    logger.info("Memory updated. Next post scheduled: %s", memory["next_scheduled_post"])
+    logger.info("Memory updated. Mood: %s. Next post: %s", memory["current_persona_mood"], memory["next_scheduled_post"])
 
 
 if __name__ == "__main__":
