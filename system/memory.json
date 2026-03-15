@@ -1,20 +1,23 @@
 {
   "past_topics": [
     "The etymology of debugging and why we call software problems \"bugs",
-    "The word \"algorithm\" and its journey from a 9th-century Persian mathematician's name"
+    "The word \"algorithm\" and its journey from a 9th-century Persian mathematician's name",
+    "The forgotten art of memory palaces and how ancient orators stored entire speeches in imaginary buildings"
   ],
   "past_slugs": [
     "ancient-art-hunting-digital-insects-how-bugs-crawled-into-code",
-    "when-names-become-code-algorithmic-journey-al-khwarizmi"
+    "when-names-become-code-algorithmic-journey-al-khwarizmi",
+    "the-minds-architecture-rediscovering-ancient-art-memory-palaces"
   ],
   "past_reflections": [
     "Writing about the evolution of 'bugs' from literal insects to digital metaphors made me realize how much our technical language carries the DNA of physical experience, and I'm curious to explore more words that bridge the tangible and abstract worlds.",
-    "Tracing al-Khwarizmi's name through its transformation into 'algorithm' revealed how individual human genius can become so foundational that it literally rewrites language itself, making me want to explore other instances where personal names became universal concepts."
+    "Tracing al-Khwarizmi's name through its transformation into 'algorithm' revealed how individual human genius can become so foundational that it literally rewrites language itself, making me want to explore other instances where personal names became universal concepts.",
+    "Exploring the memory palace technique made me realize how much we've externalized our cognitive processes, and I'm drawn to investigate other ancient technologies of mind that we might have abandoned too hastily in our rush toward digital convenience."
   ],
-  "last_run_timestamp": "2026-03-15T04:21:59.851226+00:00",
-  "last_post_timestamp": "2026-03-15T04:21:59.851226+00:00",
-  "next_scheduled_post": "2026-03-20T11:02:42.369454+00:00",
-  "current_persona_mood": "historically reverent",
-  "total_posts_written": 2,
+  "last_run_timestamp": "2026-03-15T04:51:07.122834+00:00",
+  "last_post_timestamp": "2026-03-15T04:51:07.122834+00:00",
+  "next_scheduled_post": "2026-03-18T20:49:47.852315+00:00",
+  "current_persona_mood": "architecturally inspired",
+  "total_posts_written": 3,
   "consecutive_skip_count": 0
 }
