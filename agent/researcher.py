@@ -1,0 +1,31 @@
+import logging
+import os
+
+logger = logging.getLogger(__name__)
+
+
+def research_topic(topic: str) -> str | None:
+    if os.environ.get("ENABLE_RESEARCH", "").lower() != "true":
+        logger.info("Research disabled (ENABLE_RESEARCH not set to 'true')")
+        return None
+
+    api_key = os.environ.get("TAVILY_API_KEY")
+    if not api_key:
+        logger.warning("TAVILY_API_KEY not set, skipping research")
+        return None
+
+    try:
+        from tavily import TavilyClient
+        client = TavilyClient(api_key=api_key)
+        result = client.search(query=topic, max_results=5)
+        snippets = []
+        for item in result.get("results", []):
+            title = item.get("title", "")
+            content = item.get("content", "")
+            snippets.append(f"- {title}: {content}")
+        context = "\n".join(snippets)
+        logger.info("Research complete: %d results for '%s'", len(snippets), topic)
+        return context if context else None
+    except Exception as e:
+        logger.warning("Research failed, continuing without: %s", e)
+        return None
