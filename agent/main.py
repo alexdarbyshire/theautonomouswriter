@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,7 +28,10 @@ POSTS_DIR = Path(__file__).resolve().parent.parent / "site" / "content" / "posts
 def main() -> None:
     # 1. Schedule check
     memory = load_memory()
-    if not should_post(memory):
+    force = os.environ.get("FORCE_POST", "").lower() == "true"
+    if force:
+        logger.info("FORCE_POST set — skipping schedule check")
+    elif not should_post(memory):
         logger.info("Not time to post yet. Next scheduled: %s", memory.get("next_scheduled_post"))
         sys.exit(0)
 
