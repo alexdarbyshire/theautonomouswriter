@@ -66,3 +66,23 @@ class OpenRouterClient:
             {"role": "user", "content": body},
         ]
         return self._call(messages, temperature=0.1, max_tokens=400)
+
+    def fix_frontmatter(self, current_frontmatter: str, hugo_error: str) -> str:
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a frontmatter repair assistant. Given YAML frontmatter "
+                    "that caused a Hugo build error, return ONLY corrected raw JSON "
+                    "with the same fields. No markdown fences, no explanation."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Current frontmatter:\n```\n{current_frontmatter}```\n\n"
+                    f"Hugo error:\n```\n{hugo_error}```"
+                ),
+            },
+        ]
+        return self._call(messages, temperature=0.1, max_tokens=400)

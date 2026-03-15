@@ -1,11 +1,11 @@
 import json
 import logging
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 from agent.evolve import reflect_and_evolve
+from agent.hugo import validate_and_fix
 from agent.llm import LLMUnavailableError, OpenRouterClient
 from agent.memory import load_memory, save_memory
 from agent.researcher import research_topic
@@ -132,23 +132,10 @@ def main() -> None:
     post_path.write_text(post_content)
     logger.info("Post written to %s", post_path)
 
-    # 8b. Hugo build validation — catch what LLM checks can't
-    try:
-        result = subprocess.run(
-            ["hugo", "--gc", "--minify"],
-            cwd=SITE_DIR,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode != 0:
-            logger.error("Hugo build failed:\n%s\n%s", result.stdout, result.stderr)
-            # Remove the broken post so we don't commit it
-            post_path.unlink(missing_ok=True)
-            sys.exit(1)
-        logger.info("Hugo build validation passed")
-    except FileNotFoundError:
-        logger.warning("Hugo not found, skipping build validation")
+    # 8b. Hugo build validation with fix loop
+    if not validate_and_fix(post_path, SITE_DIR, llm):
+        logger.error("Hugo validation failed after fix attempts")
+        sys.exit(1)
 
     # 9. Reflection — the writer evolves its mood and records a reflection
     evolution = reflect_and_evolve(body, memory, llm)
