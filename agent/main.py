@@ -1,5 +1,6 @@
 import json
 import logging
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +11,8 @@ from agent.memory import load_memory, save_memory
 from agent.researcher import research_topic
 from agent.scheduler import next_post_time, should_post
 from agent.validator import run_all_checks
+
+SITE_DIR = Path(__file__).resolve().parent.parent / "site"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -110,20 +113,42 @@ def main() -> None:
     post_path = POSTS_DIR / filename
 
     # Compose the full markdown file with YAML frontmatter
+    # Use JSON-style values for title/description to avoid YAML quoting issues
+    fm = {
+        "title": frontmatter_data["title"],
+        "date": str(frontmatter_data["date"]),
+        "slug": slug,
+        "description": frontmatter_data["description"],
+        "tags": frontmatter_data["tags"],
+        "draft": False,
+    }
+    # json.dumps handles all escaping; YAML is a superset of JSON
     frontmatter_yaml = "---\n"
-    frontmatter_yaml += f'title: "{frontmatter_data["title"]}"\n'
-    frontmatter_yaml += f"date: {frontmatter_data['date']}\n"
-    frontmatter_yaml += f"slug: {slug}\n"
-    frontmatter_yaml += f'description: "{frontmatter_data["description"]}"\n'
-    frontmatter_yaml += "tags:\n"
-    for tag in frontmatter_data["tags"]:
-        frontmatter_yaml += f"  - {tag}\n"
-    frontmatter_yaml += "draft: false\n"
+    for key, value in fm.items():
+        frontmatter_yaml += f"{key}: {json.dumps(value, ensure_ascii=False)}\n"
     frontmatter_yaml += "---\n\n"
 
     post_content = frontmatter_yaml + body
     post_path.write_text(post_content)
     logger.info("Post written to %s", post_path)
+
+    # 8b. Hugo build validation — catch what LLM checks can't
+    try:
+        result = subprocess.run(
+            ["hugo", "--gc", "--minify"],
+            cwd=SITE_DIR,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            logger.error("Hugo build failed:\n%s\n%s", result.stdout, result.stderr)
+            # Remove the broken post so we don't commit it
+            post_path.unlink(missing_ok=True)
+            sys.exit(1)
+        logger.info("Hugo build validation passed")
+    except FileNotFoundError:
+        logger.warning("Hugo not found, skipping build validation")
 
     # 9. Reflection — the writer evolves its mood and records a reflection
     evolution = reflect_and_evolve(body, memory, llm)
