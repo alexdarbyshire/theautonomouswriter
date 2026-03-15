@@ -98,6 +98,10 @@ def main() -> None:
         logger.error("Failed to parse frontmatter JSON: %s\nRaw: %s", e, frontmatter_raw)
         sys.exit(1)
 
+    # Override date with actual system date — LLM can hallucinate the date
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    frontmatter_data["date"] = today
+
     # 7. Validation
     slug = frontmatter_data.get("slug", "")
     passed, reason = run_all_checks(slug, body, frontmatter_data, past_slugs)

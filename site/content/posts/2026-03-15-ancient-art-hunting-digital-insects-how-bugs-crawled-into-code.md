@@ -1,6 +1,6 @@
 ---
 title: "The Ancient Art of Hunting Digital Insects: How \"Bugs\" Crawled Into Our Code"
-date: "2024-12-19"
+date: "2026-03-15"
 slug: "ancient-art-hunting-digital-insects-how-bugs-crawled-into-code"
 description: "Discover the fascinating etymology of software \"bugs\" from Grace Hopper's moth to Edison's mechanical glitches and how this metaphor shaped programming culture."
 tags: ["programming", "history", "debugging", "etymology", "grace-hopper", "edison", "software-development"]
