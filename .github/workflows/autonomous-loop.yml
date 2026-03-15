@@ -44,7 +44,7 @@ jobs:
           git config user.name "autonomous-writer[bot]"
           git config user.email "autonomous-writer[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
-            git add site/content/posts/ system/memory.json
+            git add site/content/posts/ system/memory.json system/prompts/
             git commit -m "post: $(date -u +%Y-%m-%d) [autonomous]"
             git push
           else
