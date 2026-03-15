@@ -35,6 +35,11 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: '0.148.2'
+
       - name: Install dependencies
         run: uv sync
 
@@ -47,6 +52,7 @@ jobs:
         run: uv run python -m agent.main
 
       - name: Commit new content
+        id: commit
         run: |
           git config user.name "autonomous-writer[bot]"
           git config user.email "autonomous-writer[bot]@users.noreply.github.com"
@@ -54,6 +60,21 @@ jobs:
             git add site/content/posts/ system/memory.json system/prompts/
             git commit -m "post: $(date -u +%Y-%m-%d) [autonomous]"
             git push
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
           else
             echo "No new content. Scheduled post pending."
           fi
+
+      - name: Deploy to Azure Static Web Apps
+        if: steps.commit.outputs.has_changes == 'true'
+        uses: Azure/static-web-apps-deploy@v1
+        env:
+          HUGO_VERSION: 0.148.2
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ZEALOUS_WATER_001FE8510 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/site"
+          api_location: ""
+          output_location: "public"
+          skip_app_build: false
