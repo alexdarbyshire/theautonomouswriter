@@ -9,7 +9,7 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 ## Architecture
 
 **Execution flow** (in `agent/main.py`, steps must execute in this exact order):
-1. Schedule check → 2. Load memory + prompts → 3. Research (feature-flagged) → 4. Topic selection (must avoid past topics) → 5. Draft article → 6. Extract frontmatter (separate LLM call, JSON only) → 7. Validate → 8. Write markdown to `site/content/posts/YYYY-MM-DD-{slug}.md` → 9. Update memory
+1. Schedule check → 2. Load memory + prompts → 3. Research (feature-flagged) → 4. Topic selection (must avoid past topics) → 5. Draft article → 6. Extract frontmatter (separate LLM call, JSON only) → 7. Validate → 8. Write markdown to `site/content/posts/YYYY-MM-DD-{slug}.md` → 9. Reflect & evolve (mood, optional system prompt rewrite) → 10. Update memory
 
 **Key modules:**
 - `agent/scheduler.py` — Deterministic scheduling via `next_scheduled_post` timestamp (not probabilistic). Two public functions: `should_post()`, `next_post_time()`.
@@ -17,7 +17,8 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 - `agent/validator.py` — Six named checks, each returns `(bool, str)`. Halts on first failure.
 - `agent/memory.py` — Atomic writes (write to `.tmp`, then `os.replace`).
 - `agent/models.py` — Pydantic v2 models for frontmatter validation.
-- `system/memory.json` — Flat-file database, committed to repo. Source of truth for scheduling and topic history.
+- `agent/evolve.py` — Post-write reflection. Evolves mood, records reflections, can rewrite `system/prompts/system.md`.
+- `system/memory.json` — Flat-file database, committed to repo. Source of truth for scheduling, topic history, mood, and reflections.
 
 **Two separate GitHub Actions workflows:** agent loop (`autonomous-loop.yml`) and Azure SWA deploy (triggered on push to main). Keep them decoupled.
 
@@ -28,7 +29,7 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 uv sync
 
 # Run the agent locally
-uv run python agent/main.py
+uv run python -m agent.main
 
 # Build Hugo site
 cd site && hugo

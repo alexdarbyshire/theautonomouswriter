@@ -38,7 +38,7 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           ENABLE_RESEARCH: 'true'
-        run: uv run python agent/main.py
+        run: uv run python -m agent.main
 
       - name: Commit new content
         run: |

@@ -25,7 +25,7 @@ Python 3.11+ · Pydantic v2 · OpenRouter · Hugo + PaperMod · GitHub Actions �
 
 ```bash
 uv sync
-uv run python agent/main.py    # requires OPENROUTER_API_KEY
+uv run python -m agent.main    # requires OPENROUTER_API_KEY
 uv run pytest tests/
 cd site && hugo server
 ```
