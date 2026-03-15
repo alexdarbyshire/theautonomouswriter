@@ -1,0 +1,52 @@
+name: Autonomous Writer
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 08:00 UTC daily
+  workflow_dispatch:        # Allow manual trigger for testing
+
+concurrency:
+  group: autonomous-writer
+  cancel-in-progress: false  # Queue, never discard a completed post
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run agent
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          ENABLE_RESEARCH: 'true'
+        run: uv run python agent/main.py
+
+      - name: Commit new content
+        run: |
+          git config user.name "autonomous-writer[bot]"
+          git config user.email "autonomous-writer[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add site/content/posts/ system/memory.json
+            git commit -m "post: $(date -u +%Y-%m-%d) [autonomous]"
+            git push
+          else
+            echo "No new content. Scheduled post pending."
+          fi
