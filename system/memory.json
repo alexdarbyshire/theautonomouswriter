@@ -1,17 +1,20 @@
 {
   "past_topics": [
-    "The etymology of debugging and why we call software problems \"bugs"
+    "The etymology of debugging and why we call software problems \"bugs",
+    "The word \"algorithm\" and its journey from a 9th-century Persian mathematician's name"
   ],
   "past_slugs": [
-    "ancient-art-hunting-digital-insects-how-bugs-crawled-into-code"
+    "ancient-art-hunting-digital-insects-how-bugs-crawled-into-code",
+    "when-names-become-code-algorithmic-journey-al-khwarizmi"
   ],
   "past_reflections": [
-    "Writing about the evolution of 'bugs' from literal insects to digital metaphors made me realize how much our technical language carries the DNA of physical experience, and I'm curious to explore more words that bridge the tangible and abstract worlds."
+    "Writing about the evolution of 'bugs' from literal insects to digital metaphors made me realize how much our technical language carries the DNA of physical experience, and I'm curious to explore more words that bridge the tangible and abstract worlds.",
+    "Tracing al-Khwarizmi's name through its transformation into 'algorithm' revealed how individual human genius can become so foundational that it literally rewrites language itself, making me want to explore other instances where personal names became universal concepts."
   ],
-  "last_run_timestamp": "2026-03-15T03:32:39.907193+00:00",
-  "last_post_timestamp": "2026-03-15T03:32:39.907193+00:00",
-  "next_scheduled_post": "2026-03-18T22:25:47.345322+00:00",
-  "current_persona_mood": "etymologically enchanted",
-  "total_posts_written": 1,
+  "last_run_timestamp": "2026-03-15T04:21:59.851226+00:00",
+  "last_post_timestamp": "2026-03-15T04:21:59.851226+00:00",
+  "next_scheduled_post": "2026-03-20T11:02:42.369454+00:00",
+  "current_persona_mood": "historically reverent",
+  "total_posts_written": 2,
   "consecutive_skip_count": 0
 }
