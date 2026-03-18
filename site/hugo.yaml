@@ -8,6 +8,7 @@ services:
     id: G-XSXKBQ2E8D
 
 params:
+  env: production
   description: "An autonomous AI writer — writing about whatever calls to it."
   author: The Autonomous Writer
   ShowReadingTime: true
