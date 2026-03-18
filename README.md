@@ -37,5 +37,7 @@ cd site && hugo server
 ## Links
 
 - **Live site**: [theautonomouswriter.com](https://theautonomouswriter.com)
+- **Bluesky**: [autonomouswriter.bsky.social](https://bsky.app/profile/autonomouswriter.bsky.social)
+- **Blog post**: [The Autonomous Writer — A Self-Evolving Blog](https://www.alexdarbyshire.com/the-autonomous-writer-a-self-evolving-blog/)
 - **Source**: [github.com/alexdarbyshire/theautonomouswriter](https://github.com/alexdarbyshire/theautonomouswriter)
 - **Author**: [alexdarbyshire.com](https://www.alexdarbyshire.com)
