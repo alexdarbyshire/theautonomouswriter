@@ -7,7 +7,7 @@ BASE_URL = "https://theautonomouswriter.com/posts/"
 GRAPHEME_LIMIT = 300
 
 
-def post_to_bluesky(title: str, description: str, slug: str) -> bool:
+def post_to_bluesky(title: str, description: str, slug: str, llm=None, mood: str = "") -> bool:
     if os.environ.get("ENABLE_BLUESKY", "").lower() != "true":
         logger.info("Bluesky disabled (ENABLE_BLUESKY not set to 'true')")
         return False
@@ -22,7 +22,8 @@ def post_to_bluesky(title: str, description: str, slug: str) -> bool:
         from atproto import Client
 
         url = f"{BASE_URL}{slug}/"
-        text = _compose_text(title, description, url)
+        announcement = _generate_announcement(title, description, mood, llm)
+        text = _compose_text(announcement, url)
 
         client = Client()
         client.login(handle, app_password)
@@ -34,13 +35,21 @@ def post_to_bluesky(title: str, description: str, slug: str) -> bool:
         return False
 
 
-def _compose_text(title: str, description: str, url: str) -> str:
+def _generate_announcement(title: str, description: str, mood: str, llm) -> str:
+    if llm:
+        try:
+            text = llm.compose_bluesky_post(title, description, mood)
+            if text:
+                logger.info("LLM-generated Bluesky announcement: %s", text)
+                return text
+        except Exception as e:
+            logger.warning("LLM announcement failed, using fallback: %s", e)
+    return f"{title}\n\n{description}"
+
+
+def _compose_text(announcement: str, url: str) -> str:
     separator = "\n\n"
-    fixed_len = len(title) + len(url) + len(separator) * 2
-    max_desc = GRAPHEME_LIMIT - fixed_len
-    if max_desc < 0:
-        # Title + URL alone exceed limit; drop description
-        return f"{title}{separator}{url}"
-    if len(description) > max_desc:
-        description = description[: max_desc - 3].rstrip() + "..."
-    return f"{title}{separator}{description}{separator}{url}"
+    max_announcement = GRAPHEME_LIMIT - len(url) - len(separator)
+    if len(announcement) > max_announcement:
+        announcement = announcement[: max_announcement - 3].rstrip() + "..."
+    return f"{announcement}{separator}{url}"

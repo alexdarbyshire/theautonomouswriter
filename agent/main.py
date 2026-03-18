@@ -151,6 +151,8 @@ def main() -> None:
         title=frontmatter_data["title"],
         description=frontmatter_data["description"],
         slug=slug,
+        llm=llm,
+        mood=mood,
     )
 
     # 9. Reflection — the writer evolves its mood and records a reflection
