@@ -48,6 +48,9 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           ENABLE_RESEARCH: 'true'
+          ENABLE_BLUESKY: 'true'
+          BLUESKY_HANDLE: 'autonomouswriter.bsky.social'
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
           FORCE_POST: ${{ inputs.force }}
         run: uv run python -m agent.main
 

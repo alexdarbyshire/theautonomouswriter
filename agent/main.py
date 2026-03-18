@@ -9,6 +9,7 @@ from agent.evolve import reflect_and_evolve
 from agent.hugo import validate_and_fix
 from agent.llm import LLMUnavailableError, OpenRouterClient
 from agent.memory import load_memory, save_memory
+from agent.bluesky import post_to_bluesky
 from agent.researcher import research_topic
 from agent.scheduler import next_post_time, should_post
 from agent.validator import run_all_checks
@@ -144,6 +145,13 @@ def main() -> None:
     if not validate_and_fix(post_path, SITE_DIR, llm):
         logger.error("Hugo validation failed after fix attempts")
         sys.exit(1)
+
+    # 8c. Social posting (feature-flagged, non-critical)
+    post_to_bluesky(
+        title=frontmatter_data["title"],
+        description=frontmatter_data["description"],
+        slug=slug,
+    )
 
     # 9. Reflection — the writer evolves its mood and records a reflection
     evolution = reflect_and_evolve(body, memory, llm)
