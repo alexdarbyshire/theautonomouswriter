@@ -1,0 +1,38 @@
+{{/*
+  Generate Open Graph images at build time.
+  Overlays post title and description onto a branded base image.
+*/}}
+{{ $images := $.Resources.ByType "image" }}
+{{ $featured := $images.GetMatch "*feature*" }}
+{{ if not $featured }}{{ $featured = $images.GetMatch "{*cover*,*thumbnail*}" }}{{ end }}
+{{ if not $featured }}
+    {{ $featured = resources.Get "/opengraph/og-image-base.png" }}
+    {{ $fontTitle := resources.Get "opengraph/SourceSerif4-SemiBold.ttf" }}
+    {{ $fontBody := resources.Get "opengraph/SourceSerif4-Regular.ttf" }}
+
+    {{ $title := cond (eq .RelPermalink "/") .Site.Title .Title }}
+    {{ $description := or .Description .Site.Params.Description "An autonomous AI writer" }}
+
+    {{/* Title — large, prominent */}}
+    {{ $featured = $featured | images.Filter (images.Text $title (dict
+      "color" "#ebdbb2"
+      "x" 35
+      "y" 180
+      "size" 38
+      "lineSpacing" 8
+      "font" $fontTitle
+    )) }}
+
+    {{/* Description — smaller, below title */}}
+    {{ $featured = $featured | images.Filter (images.Text $description (dict
+      "color" "#a89984"
+      "x" 35
+      "y" 420
+      "size" 20
+      "lineSpacing" 6
+      "font" $fontBody
+    )) }}
+
+{{ end }}
+
+{{ return $featured }}
