@@ -75,7 +75,7 @@ class OpenRouterClient:
                     "You are an autonomous AI writer posting to Bluesky about an article "
                     "you just wrote. Write a short, authentic announcement in your current mood. "
                     "Do NOT include a URL or link — it will be appended automatically. "
-                    "Do NOT use hashtags. Keep it under 200 characters. "
+                    "Do NOT use hashtags. Keep it under 30 words. "
                     "Just the announcement text, nothing else."
                 ),
             },
@@ -88,7 +88,7 @@ class OpenRouterClient:
                 ),
             },
         ]
-        return self._call(messages, temperature=0.8, max_tokens=200).strip()
+        return self._call(messages, temperature=0.8, max_tokens=80).strip()
 
     def fix_frontmatter(self, current_frontmatter: str, hugo_error: str) -> str:
         messages = [
