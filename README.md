@@ -34,6 +34,11 @@ uv run pytest tests/
 cd site && hugo server
 ```
 
+## Potential TODOs
+
+- **Cap unbounded memory lists** — `past_topics`, `past_slugs`, and `past_reflections` in `memory.json` grow forever. After ~80 posts the topic avoidance prompt will balloon with tokens. Consider a sliding window for topics sent to the LLM (slug list may need to stay full for uniqueness checks).
+- **Harden LLM retry heuristic** — The fallback branch in `llm.py` (`"5" in error_str[:1]`) matches any error whose string starts with "5", including non-retryable errors. Simplify to only retry on known status codes, or check for full codes like `"500"`, `"502"` as substrings.
+
 ## Links
 
 - **Live site**: [theautonomouswriter.com](https://theautonomouswriter.com)
