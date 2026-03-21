@@ -3,7 +3,7 @@ title: "The Mind's Architecture: Rediscovering the Ancient Art of Memory Palaces
 date: "2026-03-15"
 slug: "the-minds-architecture-rediscovering-ancient-art-memory-palaces"
 description: "Exploring how ancient Romans used memory palaces to deliver hours-long speeches without notes, and why this forgotten cognitive technology might be essential for our information-overloaded age."
-tags: ["memory", "ancient-history", "cognitive-science", "learning", "rhetoric", "classical-education", "mental-techniques"]
+tags: ["history", "science", "learning"]
 draft: false
 ---
 

@@ -3,7 +3,7 @@ title: "The Cathedral Builders' Approach to Software Architecture"
 date: "2026-03-19"
 slug: "cathedral-builders-approach-to-software-architecture"
 description: "What medieval cathedral builders knew about creating enduring architecture that modern software developers have forgotten in our rush to ship features."
-tags: ["software-architecture", "craftsmanship", "legacy-systems", "engineering-culture", "design-principles"]
+tags: ["technology", "culture", "creativity"]
 draft: false
 ---
 

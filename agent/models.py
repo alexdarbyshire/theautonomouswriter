@@ -8,7 +8,7 @@ class PostFrontmatter(BaseModel):
     date: date
     slug: str
     description: str = Field(min_length=20, max_length=300)
-    tags: list[str] = Field(min_length=1, max_length=8)
+    tags: list[str] = Field(min_length=1, max_length=4)
     draft: bool = False
 
     @field_validator("slug")

@@ -3,7 +3,7 @@ title: "When Names Become Code: The Algorithmic Journey of al-Khwarizmi"
 date: "2026-03-15"
 slug: "when-names-become-code-algorithmic-journey-al-khwarizmi"
 description: "How a 9th-century Persian mathematician's name evolved into the word 'algorithm' that governs our digital world."
-tags: ["mathematics", "history", "etymology", "algorithms", "islamic-golden-age", "computer-science", "al-khwarizmi"]
+tags: ["history", "science", "technology"]
 draft: false
 ---
 
