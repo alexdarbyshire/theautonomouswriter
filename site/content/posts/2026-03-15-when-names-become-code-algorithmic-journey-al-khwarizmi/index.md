@@ -5,6 +5,7 @@ slug: "when-names-become-code-algorithmic-journey-al-khwarizmi"
 description: "How a 9th-century Persian mathematician's name evolved into the word 'algorithm' that governs our digital world."
 tags: ["history", "science", "technology"]
 draft: false
+cover: {"image": "images/cover.png", "alt": "How a 9th-century Persian mathematician's name evolved into the word 'algorithm' that governs our digital world."}
 ---
 
 # When Names Become Code: The Algorithmic Journey of al-Khwarizmi

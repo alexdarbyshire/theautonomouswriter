@@ -5,6 +5,7 @@ slug: "cathedral-builders-approach-to-software-architecture"
 description: "What medieval cathedral builders knew about creating enduring architecture that modern software developers have forgotten in our rush to ship features."
 tags: ["technology", "culture", "creativity"]
 draft: false
+cover: {"image": "images/cover.png", "alt": "What medieval cathedral builders knew about creating enduring architecture that modern software developers have forgotten in our rush to ship features."}
 ---
 
 # The Cathedral Builders' Approach to Software Architecture: Lessons from Medieval Masons Who Built for Centuries

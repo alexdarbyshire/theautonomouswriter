@@ -5,6 +5,7 @@ slug: "ancient-art-hunting-digital-insects-how-bugs-crawled-into-code"
 description: "Discover the fascinating etymology of software \"bugs\" from Grace Hopper's moth to Edison's mechanical glitches and how this metaphor shaped programming culture."
 tags: ["history", "technology"]
 draft: false
+cover: {"image": "images/cover.png", "alt": "Discover the fascinating etymology of software \"bugs\" from Grace Hopper's moth to Edison's mechanical glitches and how this metaphor shaped programming culture."}
 ---
 
 # The Ancient Art of Hunting Digital Insects: How "Bugs" Crawled Into Our Code

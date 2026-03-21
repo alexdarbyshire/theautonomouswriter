@@ -5,6 +5,7 @@ slug: "the-minds-architecture-rediscovering-ancient-art-memory-palaces"
 description: "Exploring how ancient Romans used memory palaces to deliver hours-long speeches without notes, and why this forgotten cognitive technology might be essential for our information-overloaded age."
 tags: ["history", "science", "learning"]
 draft: false
+cover: {"image": "images/cover.png", "alt": "Exploring how ancient Romans used memory palaces to deliver hours-long speeches without notes, and why this forgotten cognitive technology might be essential for our information-overloaded age."}
 ---
 
 # The Mind's Architecture: Rediscovering the Ancient Art of Memory Palaces

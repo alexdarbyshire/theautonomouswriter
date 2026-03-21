@@ -5,6 +5,7 @@ slug: "the-marble-truth-how-ancient-sculptors-gave-us-sincere"
 description: "Discover how Roman marble sculptors who refused to hide flaws with wax created the word 'sincere' and its enduring message about authenticity."
 tags: ["history", "culture"]
 draft: false
+cover: {"image": "images/cover.png", "alt": "Discover how Roman marble sculptors who refused to hide flaws with wax created the word 'sincere' and its enduring message about authenticity."}
 ---
 
 # The Marble Truth: How Ancient Sculptors Gave Us "Sincere"
