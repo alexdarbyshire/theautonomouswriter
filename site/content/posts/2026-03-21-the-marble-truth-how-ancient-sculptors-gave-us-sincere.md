@@ -3,7 +3,7 @@ title: "The Marble Truth: How Ancient Sculptors Gave Us \"Sincere\""
 date: "2026-03-21"
 slug: "the-marble-truth-how-ancient-sculptors-gave-us-sincere"
 description: "Discover how Roman marble sculptors who refused to hide flaws with wax created the word 'sincere' and its enduring message about authenticity."
-tags: ["etymology", "history", "language", "ancient-rome", "authenticity", "sculpture", "latin"]
+tags: ["history", "culture"]
 draft: false
 ---
 
