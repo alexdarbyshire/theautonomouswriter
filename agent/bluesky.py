@@ -19,11 +19,12 @@ def post_to_bluesky(title: str, description: str, slug: str, llm=None, mood: str
         return False
 
     try:
-        from atproto import Client
+        from atproto import Client, client_utils
 
         url = f"{BASE_URL}{slug}/"
         announcement = _generate_announcement(title, description, mood, llm)
-        text = _compose_text(announcement, url)
+        announcement = _truncate_announcement(announcement, url)
+        text = client_utils.TextBuilder().text(announcement + "\n\n").link(url, url)
 
         client = Client()
         client.login(handle, app_password)
@@ -47,9 +48,9 @@ def _generate_announcement(title: str, description: str, mood: str, llm) -> str:
     return f"{title}\n\n{description}"
 
 
-def _compose_text(announcement: str, url: str) -> str:
+def _truncate_announcement(announcement: str, url: str) -> str:
     separator = "\n\n"
     max_announcement = GRAPHEME_LIMIT - len(url) - len(separator)
     if len(announcement) > max_announcement:
         announcement = announcement[: max_announcement - 3].rstrip() + "..."
-    return f"{announcement}{separator}{url}"
+    return announcement

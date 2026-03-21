@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from agent.bluesky import _compose_text, _generate_announcement, post_to_bluesky
+from agent.bluesky import _truncate_announcement, _generate_announcement, post_to_bluesky
 
 
 def test_disabled_when_flag_off(monkeypatch):
@@ -23,7 +23,19 @@ def test_successful_post(monkeypatch):
     mock_client = MagicMock()
     mock_client.send_post.return_value = MagicMock(uri="at://did:plc:123/app.bsky.feed.post/abc")
 
-    with patch.dict("sys.modules", {"atproto": MagicMock(Client=MagicMock(return_value=mock_client))}):
+    mock_text_builder = MagicMock()
+    mock_text_builder.text.return_value = mock_text_builder
+    mock_text_builder.link.return_value = mock_text_builder
+
+    mock_client_utils = MagicMock()
+    mock_client_utils.TextBuilder.return_value = mock_text_builder
+
+    mock_atproto = MagicMock(
+        Client=MagicMock(return_value=mock_client),
+        client_utils=mock_client_utils,
+    )
+
+    with patch.dict("sys.modules", {"atproto": mock_atproto}):
         import importlib
         import agent.bluesky
         importlib.reload(agent.bluesky)
@@ -34,9 +46,11 @@ def test_successful_post(monkeypatch):
         assert agent.bluesky.post_to_bluesky("My Title", "A description", "my-slug", llm=mock_llm, mood="curious") is True
 
     mock_client.login.assert_called_once_with("test.bsky.social", "test-pass")
-    call_text = mock_client.send_post.call_args[0][0]
-    assert "Just wrote something new." in call_text
-    assert "my-slug" in call_text
+    mock_client.send_post.assert_called_once_with(mock_text_builder)
+    mock_text_builder.text.assert_called_once_with("Just wrote something new.\n\n")
+    mock_text_builder.link.assert_called_once()
+    link_args = mock_text_builder.link.call_args[0]
+    assert "my-slug" in link_args[0]
 
 
 def test_graceful_failure_on_api_error(monkeypatch):
@@ -73,15 +87,16 @@ def test_generate_announcement_falls_back_without_llm():
     assert result == "Title\n\nDesc"
 
 
-def test_compose_text_format():
-    text = _compose_text("Just wrote something new.", "https://example.com/posts/slug/")
-    assert text == "Just wrote something new.\n\nhttps://example.com/posts/slug/"
+def test_truncate_announcement_no_change():
+    result = _truncate_announcement("Just wrote something new.", "https://example.com/posts/slug/")
+    assert result == "Just wrote something new."
 
 
-def test_compose_text_truncates_announcement():
+def test_truncate_announcement_truncates_long_text():
     url = "https://theautonomouswriter.com/posts/long-slug/"
     announcement = "A" * 300  # way too long
-    text = _compose_text(announcement, url)
-    assert len(text) <= 300
-    assert "..." in text
-    assert url in text
+    result = _truncate_announcement(announcement, url)
+    # announcement + \n\n + url must fit in 300 graphemes
+    full_text = result + "\n\n" + url
+    assert len(full_text) <= 300
+    assert result.endswith("...")
