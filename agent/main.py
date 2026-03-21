@@ -7,6 +7,7 @@ from pathlib import Path
 
 from agent.evolve import reflect_and_evolve
 from agent.hugo import validate_and_fix
+from agent.images import generate_cover_image
 from agent.llm import LLMUnavailableError, OpenRouterClient
 from agent.memory import load_memory, save_memory
 from agent.bluesky import post_to_bluesky
@@ -115,11 +116,27 @@ def main() -> None:
         sys.exit(1)
     logger.info("All validation checks passed")
 
+    # 7b. Cover image generation (feature-flagged, non-critical)
+    cover_image_bytes = generate_cover_image(
+        llm, frontmatter_data["title"], frontmatter_data["description"], mood,
+    )
+
     # 8. Filesystem write
     date_str = frontmatter_data["date"]
-    filename = f"{date_str}-{slug}.md"
     POSTS_DIR.mkdir(parents=True, exist_ok=True)
-    post_path = POSTS_DIR / filename
+
+    if cover_image_bytes:
+        # Page bundle: directory with index.md + images/cover.png
+        post_dir = POSTS_DIR / f"{date_str}-{slug}"
+        post_dir.mkdir(parents=True, exist_ok=True)
+        post_path = post_dir / "index.md"
+        img_dir = post_dir / "images"
+        img_dir.mkdir(exist_ok=True)
+        (img_dir / "cover.png").write_bytes(cover_image_bytes)
+        logger.info("Cover image saved (%d bytes)", len(cover_image_bytes))
+    else:
+        # Flat file (existing behavior)
+        post_path = POSTS_DIR / f"{date_str}-{slug}.md"
 
     # Compose the full markdown file with YAML frontmatter
     # Use JSON-style values for title/description to avoid YAML quoting issues
@@ -131,6 +148,11 @@ def main() -> None:
         "tags": frontmatter_data["tags"],
         "draft": False,
     }
+    if cover_image_bytes:
+        fm["cover"] = {
+            "image": "images/cover.png",
+            "alt": frontmatter_data["description"],
+        }
     # json.dumps handles all escaping; YAML is a superset of JSON
     frontmatter_yaml = "---\n"
     for key, value in fm.items():
