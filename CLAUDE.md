@@ -50,7 +50,6 @@ uv run pytest tests/
 ## Key Constraints
 
 - Python 3.11+, prefer stdlib. Minimize external dependencies.
-- No image generation — text/Markdown only.
 - All validation checks must pass before any file is written. On failure: log reason, `sys.exit(1)`, write nothing.
 - Scheduling is deterministic (timestamp comparison), never probabilistic.
 - All state lives in git — every run produces a traceable commit or a clean exit.

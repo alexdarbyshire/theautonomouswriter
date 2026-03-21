@@ -32,7 +32,6 @@ Build a fully autonomous, serverless AI blogging agent. The system wakes up on a
 **Core Directives:**
 
 - **KISS:** Rely on Python stdlib where possible. Minimize external dependencies.
-- **No Image Generation:** Output is strictly text/Markdown.
 - **Explicit Validation:** All AI output must pass named, enumerated checks before touching the filesystem. "Valid Markdown" is not a check — see Section 4D.
 - **Determinism:** Scheduling is timestamp-based, not probabilistic.
 - **Auditability:** All state lives in git. Every run leaves a traceable commit or a clean exit.
