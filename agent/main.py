@@ -73,7 +73,14 @@ def main() -> None:
     # 5. Draft article
     draft_prompt = f"Write a blog post about: {topic}\n\n"
     if research_context:
-        draft_prompt += f"Here is some current research context to inform your writing:\n{research_context}\n\n"
+        draft_prompt += "Here is some current research context to inform your writing (use these sources where relevant):\n"
+        for i, src in enumerate(research_context, 1):
+            draft_prompt += f"{i}. [{src['title']}]({src['url']}): {src['content']}\n"
+        draft_prompt += (
+            "\nIf you draw on any of these sources, include a '## References' section "
+            "at the end of your post with markdown links to the sources you actually used. "
+            "Only cite sources you genuinely referenced in your writing.\n\n"
+        )
     draft_prompt += (
         f"Your current mood/style: {mood}\n"
         f"Remember: minimum 400 words, use ## headings, no placeholders, no empty sections."
