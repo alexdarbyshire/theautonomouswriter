@@ -282,7 +282,7 @@ def test_final_reply_includes_signoff_context(monkeypatch, tmp_path):
     assert stats["replies_sent"] == 1
     # Check that the compose_reply call included sign-off context
     call_args = mock_llm.compose_reply.call_args[0]
-    assert "final reply" in call_args[1].lower()
+    assert "last reply" in call_args[1].lower()
 
 
 def test_extract_post_text():

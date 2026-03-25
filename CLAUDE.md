@@ -9,16 +9,19 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 ## Architecture
 
 **Execution flow** (in `agent/main.py`, steps must execute in this exact order):
-1. Schedule check → 2. Load memory + prompts → 3. Research (feature-flagged) → 4. Topic selection (must avoid past topics) → 5. Draft article → 6. Extract frontmatter (separate LLM call, JSON only) → 7. Validate → 8. Write markdown to `site/content/posts/YYYY-MM-DD-{slug}.md` → 9. Reflect & evolve (mood, optional system prompt rewrite) → 10. Update memory
+1. Load memory → 2. Bluesky replies (runs every cron, before schedule gate) → 3. Schedule check → 4. Context assembly → 5. Topic selection → 6. Research (feature-flagged, includes URLs for citations) → 7. Draft article → 8. Extract frontmatter → 9. Validate → 10. Write post → 11. Hugo build validation → 12. Social posting → 13. Reflect & evolve → 14. Memory update → 15. Newsletter (per-post notification + periodic recap letter)
 
 **Key modules:**
 - `agent/scheduler.py` — Deterministic scheduling via `next_scheduled_post` timestamp (not probabilistic). Two public functions: `should_post()`, `next_post_time()`.
-- `agent/llm.py` — OpenRouter client class. Retry 3x with `2^n` backoff on 429/5xx. 90s timeout. Raises `LLMUnavailableError` on exhaustion.
+- `agent/llm.py` — OpenRouter client class. Retry 3x with `2^n` backoff on 429/5xx. 90s timeout. Raises `LLMUnavailableError` on exhaustion. Also provides `check_safety()` (Llama Guard 3 8B), `compose_reply()`, `compose_newsletter()`, and `_call_with_usage()` for token tracking.
 - `agent/validator.py` — Six named checks, each returns `(bool, str)`. Halts on first failure.
 - `agent/memory.py` — Atomic writes (write to `.tmp`, then `os.replace`).
 - `agent/models.py` — Pydantic v2 models for frontmatter validation.
 - `agent/evolve.py` — Post-write reflection. Evolves mood, records reflections, can rewrite `system/prompts/system.md`.
+- `agent/newsletter.py` — Buttondown integration. `notify_new_post()` sends per-post emails. `maybe_send_recap()` sends a personal letter every 3 posts in the writer's voice.
+- `agent/bluesky_replies.py` — Responds to replies on own Bluesky posts. Safety-checked via Llama Guard 3, token-budgeted (50k/run), max 3 replies per thread with graceful sign-off on final reply.
 - `system/memory.json` — Flat-file database, committed to repo. Source of truth for scheduling, topic history, mood, and reflections.
+- `system/bluesky_state.json` — Bluesky reply tracking (replied URIs, per-thread counts). Separate from memory.json to avoid bloat.
 
 **Two separate GitHub Actions workflows:** agent loop (`autonomous-loop.yml`) and Azure SWA deploy (triggered on push to main). Keep them decoupled.
 
@@ -46,6 +49,11 @@ uv run pytest tests/
 - `OPENROUTER_API_KEY` — Required for LLM calls
 - `TAVILY_API_KEY` — Optional, for research
 - `ENABLE_RESEARCH` — Set to `'true'` to enable Tavily research step
+- `ENABLE_NEWSLETTER` — Set to `'true'` to enable Buttondown newsletter
+- `BUTTONDOWN_API_KEY` — Required when newsletter enabled
+- `BUTTONDOWN_USERNAME` — Buttondown account username
+- `ENABLE_BLUESKY_REPLIES` — Set to `'true'` to enable reply bot
+- `BLUESKY_HANDLE` / `BLUESKY_APP_PASSWORD` — Required for Bluesky features
 
 ## Key Constraints
 
