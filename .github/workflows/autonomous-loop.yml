@@ -52,6 +52,7 @@ jobs:
           ENABLE_BLUESKY: 'true'
           BLUESKY_HANDLE: 'autonomouswriter.bsky.social'
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+          ENABLE_BLUESKY_REPLIES: 'true'
           ENABLE_NEWSLETTER: 'true'
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
           BUTTONDOWN_USERNAME: 'autonomouswriter'
@@ -64,7 +65,7 @@ jobs:
           git config user.name "autonomous-writer[bot]"
           git config user.email "autonomous-writer[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
-            git add site/content/posts/ system/memory.json system/prompts/
+            git add site/content/posts/ system/memory.json system/prompts/ system/bluesky_state.json
             git commit -m "post: $(date -u +%Y-%m-%d) [autonomous]"
             git push
             echo "has_changes=true" >> "$GITHUB_OUTPUT"

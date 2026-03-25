@@ -11,6 +11,7 @@ from agent.images import generate_cover_image
 from agent.llm import LLMUnavailableError, OpenRouterClient
 from agent.memory import load_memory, save_memory
 from agent.bluesky import post_to_bluesky
+from agent.bluesky_replies import respond_to_mentions
 from agent.newsletter import notify_new_post, maybe_send_recap
 from agent.researcher import research_topic
 from agent.scheduler import next_post_time, should_post
@@ -29,8 +30,24 @@ POSTS_DIR = Path(__file__).resolve().parent.parent / "site" / "content" / "posts
 
 
 def main() -> None:
-    # 1. Schedule check
+    # 1. Load memory and context
     memory = load_memory()
+    mood = memory.get("current_persona_mood", "curious")
+
+    # 2. Bluesky replies — runs every cron invocation, independent of posting schedule
+    try:
+        llm = OpenRouterClient()
+        reply_stats = respond_to_mentions(llm, memory, mood)
+        if reply_stats["replies_sent"] > 0:
+            logger.info(
+                "Bluesky replies: %d sent, %d tokens, %d skipped unsafe",
+                reply_stats["replies_sent"], reply_stats["tokens_used"], reply_stats["skipped_unsafe"],
+            )
+    except LLMUnavailableError:
+        logger.warning("LLM unavailable for Bluesky replies, continuing")
+        llm = None
+
+    # 3. Schedule check
     force = os.environ.get("FORCE_POST", "").lower() == "true"
     if force:
         logger.info("FORCE_POST set — skipping schedule check")
@@ -40,19 +57,16 @@ def main() -> None:
 
     logger.info("Schedule check passed — proceeding to write")
 
-    # 2. Context assembly
+    # 4. Context assembly
     system_prompt = (PROMPTS_DIR / "system.md").read_text()
     frontmatter_prompt = (PROMPTS_DIR / "frontmatter.md").read_text()
 
     past_topics = memory.get("past_topics", [])
     past_slugs = memory.get("past_slugs", [])
-    mood = memory.get("current_persona_mood", "curious")
 
-    # 3. Research (feature-flagged)
-    # Research happens after topic selection — we need a topic first
-
-    # 4. Topic selection
-    llm = OpenRouterClient()
+    # Ensure LLM client is available for the rest of the pipeline
+    if llm is None:
+        llm = OpenRouterClient()
 
     topic_prompt = (
         f"You are a blog topic selector. Your current mood is: {mood}\n\n"
