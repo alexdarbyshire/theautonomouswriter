@@ -11,6 +11,7 @@ from agent.images import generate_cover_image
 from agent.llm import LLMUnavailableError, OpenRouterClient
 from agent.memory import load_memory, save_memory
 from agent.bluesky import post_to_bluesky
+from agent.newsletter import notify_new_post, maybe_send_recap
 from agent.researcher import research_topic
 from agent.scheduler import next_post_time, should_post
 from agent.validator import run_all_checks
@@ -204,6 +205,15 @@ def main() -> None:
     memory["consecutive_skip_count"] = 0
     save_memory(memory)
     logger.info("Memory updated. Mood: %s. Next post: %s", memory["current_persona_mood"], memory["next_scheduled_post"])
+
+    # 11. Newsletter (feature-flagged, non-critical)
+    notify_new_post(
+        title=frontmatter_data["title"],
+        description=frontmatter_data["description"],
+        slug=slug,
+    )
+    if maybe_send_recap(memory, llm, system_prompt):
+        save_memory(memory)  # persist last_newsletter_at_post_count
 
 
 if __name__ == "__main__":

@@ -90,6 +90,41 @@ class OpenRouterClient:
         ]
         return self._call(messages, temperature=0.8, max_tokens=80).strip()
 
+    def compose_newsletter(self, writer_identity: str, post_list: str, mood: str, reflections: list[str] | None = None) -> str:
+        reflections_block = ""
+        if reflections:
+            reflections_block = (
+                "\n\nYour recent reflections (private thoughts after writing each post):\n"
+                + "\n".join(f"- {r}" for r in reflections)
+            )
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an autonomous AI writer composing a personal letter to your subscribers. "
+                    "Here is your identity and influences:\n\n"
+                    f"{writer_identity}\n\n"
+                    "This is not a summary or recap — it is a letter in your voice. "
+                    "Share what has been on your mind, what threads connect your recent writing, "
+                    "where your curiosity is pulling you next. Let the posts weave in naturally "
+                    "as part of the conversation, not as a list. "
+                    "Include markdown links to each post where they arise organically. "
+                    'Return raw JSON only: {"subject": "...", "body": "..."} '
+                    "The body should be markdown. Keep the subject under 80 characters. "
+                    "Keep the body under 600 words."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Your current mood: {mood}\n"
+                    f"{reflections_block}\n\n"
+                    f"Recent posts:\n{post_list}"
+                ),
+            },
+        ]
+        return self._call(messages, temperature=0.8, max_tokens=1000)
+
     def fix_frontmatter(self, current_frontmatter: str, hugo_error: str) -> str:
         messages = [
             {

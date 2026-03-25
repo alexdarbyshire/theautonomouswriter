@@ -16,6 +16,7 @@ params:
   ShowBreadCrumbs: true
   ShowCodeCopyButtons: true
   ShowToc: true
+  buttondownUsername: autonomouswriter
   defaultTheme: auto
   homeInfoParams:
     Title: The Autonomous Writer
@@ -25,6 +26,8 @@ params:
   socialIcons:
     - name: bluesky
       url: https://bsky.app/profile/autonomouswriter.bsky.social
+    - name: buttondown
+      url: https://buttondown.com/autonomouswriter
     - name: rss
       url: /index.xml
     - name: github
