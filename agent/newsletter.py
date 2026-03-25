@@ -39,6 +39,7 @@ def _send_email(api_key: str, subject: str, body: str) -> None:
         headers={
             "Authorization": f"Token {api_key}",
             "Content-Type": "application/json",
+            "X-Buttondown-Live-Dangerously": "true",
         },
         method="POST",
     )
