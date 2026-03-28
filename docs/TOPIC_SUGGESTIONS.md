@@ -118,8 +118,9 @@ Functions (reusing `agent/memory.py` atomic write pattern):
 | `get_safe_suggestions(suggestions)` | Return `screened_safe` entries, max 5 |
 | `mark_used(suggestions, suggestion_id, slug)` | Set status `used`, record slug |
 | `cleanup(suggestions)` | Expire safe > 90 days, remove unsafe > 7 days, remove used > 30 days |
-| `user_hash(identifier, secret)` | HMAC-SHA256 keyed hash, returns 16-char hex |
-| `check_rate_limit(suggestions, submitter_encrypted, source, ...)` | Count recent submissions by hash, return bool |
+| `encrypt_identifier(identifier, key)` | Fernet-encrypt a user identifier, returns base64 ciphertext |
+| `decrypt_identifier(token, key)` | Decrypt a stored identifier back to plaintext |
+| `check_rate_limit(suggestions, identifier, key, source, ...)` | Decrypt existing entries, compare plaintext in memory, return bool |
 
 Feature-gated via `ENABLE_SUGGESTIONS` env var.
 
@@ -159,8 +160,8 @@ Python v2 programming model. Single endpoint `POST /api/suggest`:
 
 1. **Auth check** — Azure SWA injects `x-ms-client-principal` header for authenticated users. Decode base64 JSON to get `userId`.
 2. **Validate** — `suggestion` field, 10-300 chars, no URLs (`https?://`), basic profanity blocklist.
-3. **Rate limit** — In-memory dict by `userId`, 5 per hour (resets on cold start). This is a coarse first-pass; the real per-user rate limit is enforced by `submitter_encrypted` checks in the ingest workflow.
-4. **Dispatch** — Trigger `ingest-suggestion.yml` via GitHub API `workflow_dispatch` with inputs: `source`, `text`, `submitted_at`, `submitter_encrypted` (HMAC of userId).
+3. **Rate limit** — In-memory dict by `userId`, 3 per 24 hours (resets on cold start). This is a coarse edge guard; the real per-user rate limit (3 per 30 days) is enforced by `submitter_encrypted` checks in the ingest workflow.
+4. **Dispatch** — Trigger `ingest-suggestion.yml` via GitHub API `workflow_dispatch` with inputs: `source`, `text`, `submitted_at`, `submitter_encrypted` (Fernet-encrypted userId).
 5. **Return** — `200 { "ok": true, "message": "..." }` or `400`/`429` with error.
 
 **Why workflow_dispatch:** Avoids race conditions between concurrent form submissions and agent runs. The workflow serializes writes via `concurrency: group: suggestions-writer`.
@@ -338,8 +339,8 @@ api/__pycache__/
 | `test_cleanup_expires_old_safe` | Safe suggestions > 90 days become `expired` |
 | `test_cleanup_removes_old_unsafe` | Unsafe > 7 days removed |
 | `test_cleanup_removes_old_used` | Used > 30 days removed |
-| `test_user_hash_deterministic` | Same input + secret = same hash |
-| `test_user_hash_varies_by_secret` | Different secret = different hash |
+| `test_encrypt_decrypt_roundtrip` | Encrypt then decrypt returns original identifier |
+| `test_encrypt_varies_per_call` | Same input produces different ciphertext (Fernet nonce) |
 | `test_rate_limit_allows_under` | Returns True when under limit |
 | `test_rate_limit_blocks_over` | Returns False when at limit |
 | `test_disabled_when_flag_off` | Feature gate prevents execution |
@@ -349,7 +350,7 @@ api/__pycache__/
 | Variable | Where | Purpose |
 |----------|-------|---------|
 | `ENABLE_SUGGESTIONS` | Actions env | Feature gate for suggestion ingestion |
-| `RATE_LIMIT_SECRET` | Actions secret + Azure app setting | HMAC key for hashing user identifiers |
+| `SUGGESTION_ENCRYPTION_KEY` | Actions secret + Azure app setting | Fernet key for encrypting user identifiers |
 | `GOOGLE_CLIENT_ID` | Azure SWA app setting | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Azure SWA app setting | Google OAuth client secret |
 | `GITHUB_TOKEN` (for Azure Function) | Azure SWA app setting | Fine-grained PAT with `actions:write` for workflow dispatch |
@@ -395,7 +396,7 @@ Mirrors `agent/bluesky_replies.py` architecture:
 }
 ```
 
-`subscriber_reply_counts` keyed by `"{email_id}:{subscriber_hash}"` to cap per-subscriber per-email. Subscriber identity is HMAC-hashed before storage.
+`subscriber_reply_counts` keyed by `"{email_id}:{subscriber_encrypted}"` to cap per-subscriber per-email. Subscriber identity is Fernet-encrypted before storage.
 
 **New LLM function: `agent/llm.py:compose_email_reply()`:**
 - System prompt: writer's identity + mood (same as Bluesky)

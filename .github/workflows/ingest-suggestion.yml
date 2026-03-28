@@ -1,0 +1,57 @@
+name: Ingest Topic Suggestion
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        required: true
+        type: string
+      text:
+        required: true
+        type: string
+      submitted_at:
+        required: true
+        type: string
+      submitter_encrypted:
+        required: true
+        type: string
+
+concurrency:
+  group: suggestions-writer
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Screen suggestion via Llama Guard
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: uv run python scripts/screen_suggestion.py "${{ inputs.text }}"
+
+      - name: Append to suggestions.json
+        env:
+          SUGGESTION_ENCRYPTION_KEY: ${{ secrets.SUGGESTION_ENCRYPTION_KEY }}
+        run: >
+          uv run python scripts/append_suggestion.py
+          "${{ inputs.source }}"
+          "${{ inputs.text }}"
+          "${{ inputs.submitted_at }}"
+          "${{ inputs.submitter_encrypted }}"
+
+      - name: Commit
+        run: |
+          git config user.name "autonomous-writer[bot]"
+          git config user.email "autonomous-writer[bot]@users.noreply.github.com"
+          git add system/suggestions.json
+          git diff --cached --quiet || git commit -m "suggestion: ingest from ${{ inputs.source }}"
+          git push

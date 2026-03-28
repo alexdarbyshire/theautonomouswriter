@@ -15,6 +15,16 @@ from agent.bluesky_replies import respond_to_mentions
 from agent.newsletter import notify_new_post, maybe_send_recap
 from agent.researcher import research_topic
 from agent.scheduler import next_post_time, should_post
+from agent.suggestions import (
+    cleanup as cleanup_suggestions,
+    format_suggestions_for_prompt,
+    get_safe_suggestions,
+    load_suggestions,
+    mark_used,
+    parse_topic_for_suggestion_id,
+    save_suggestions,
+    screen_pending,
+)
 from agent.validator import run_all_checks
 
 SITE_DIR = Path(__file__).resolve().parent.parent / "site"
@@ -68,11 +78,26 @@ def main() -> None:
     if llm is None:
         llm = OpenRouterClient()
 
+    # 4b. Suggestion screening (feature-flagged, non-critical)
+    suggestions_data = None
+    suggestions_context = ""
+    if os.environ.get("ENABLE_SUGGESTIONS", "").lower() == "true":
+        try:
+            suggestions_data = load_suggestions()
+            screen_pending(suggestions_data, llm)
+            safe = get_safe_suggestions(suggestions_data)
+            if safe:
+                suggestions_context = "\n\n" + format_suggestions_for_prompt(safe)
+                logger.info("Loaded %d safe suggestions for topic prompt", len(safe))
+        except Exception as e:
+            logger.warning("Suggestion processing failed (non-critical): %s", e)
+
     topic_prompt = (
         f"You are a blog topic selector. Your current mood is: {mood}\n\n"
         f"Previously written topics (do NOT repeat these):\n"
         + ("\n".join(f"- {t}" for t in past_topics) if past_topics else "- (none yet, this is the first post)")
         + "\n\nSuggest ONE new blog topic. Reply with ONLY the topic as a short phrase, nothing else."
+        + suggestions_context
     )
 
     try:
@@ -81,6 +106,12 @@ def main() -> None:
     except LLMUnavailableError as e:
         logger.error("Failed to select topic: %s", e)
         sys.exit(1)
+
+    # 5b. Check if a reader suggestion was used
+    suggestion_id, topic = parse_topic_for_suggestion_id(topic)
+    if suggestion_id and suggestions_data:
+        mark_used(suggestions_data, suggestion_id, "")  # slug filled in after frontmatter
+        logger.info("Topic inspired by suggestion: %s", suggestion_id)
 
     # 3. Research (now that we have a topic)
     research_context = research_topic(topic)
@@ -130,8 +161,12 @@ def main() -> None:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     frontmatter_data["date"] = today
 
-    # 7. Validation
+    # Fill in the slug on the used suggestion now that we have it
     slug = frontmatter_data.get("slug", "")
+    if suggestion_id and suggestions_data:
+        mark_used(suggestions_data, suggestion_id, slug)
+
+    # 7. Validation
     passed, reason = run_all_checks(slug, body, frontmatter_data, past_slugs)
     if not passed:
         logger.error("Validation failed: %s", reason)
@@ -219,6 +254,15 @@ def main() -> None:
     memory["consecutive_skip_count"] = 0
     save_memory(memory)
     logger.info("Memory updated. Mood: %s. Next post: %s", memory["current_persona_mood"], memory["next_scheduled_post"])
+
+    # 10b. Suggestion cleanup
+    if suggestions_data is not None:
+        try:
+            cleanup_suggestions(suggestions_data)
+            save_suggestions(suggestions_data)
+            logger.info("Suggestions cleaned up and saved")
+        except Exception as e:
+            logger.warning("Suggestion cleanup failed (non-critical): %s", e)
 
     # 11. Newsletter (feature-flagged, non-critical)
     notify_new_post(

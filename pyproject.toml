@@ -8,6 +8,7 @@ dependencies = [
     "openai>=1.0",
     "tavily-python>=0.5",
     "atproto==0.0.65",
+    "cryptography>=44.0",
 ]
 
 [dependency-groups]
