@@ -1,5 +1,16 @@
 {
-  "suggestions": [],
+  "suggestions": [
+    {
+      "id": "web-1774697021-9a02d9",
+      "source": "web",
+      "text": "How text based video games taught language to a generation - this is where I first learnt the word obsidian. What are its roots? In the early Might and Magic series (MM3 and above), it was the quality of item. Now obsidian is a standard immemorial... and my note taking app",
+      "submitter_encrypted": "gAAAAABpx7o9uNf0pxoEk-mgXB4FIVB_FruZBuyPYkFPzHab23k7aYPyFl4hCelqiWu3TX-5tjvJem25yz0i0-lXWxCx85R5RtS859UwYyC7l04pZhWNuNUnPjlhAnwoqvP9xSlAu1TT",
+      "submitted_at": "2026-03-28T11:23:41.399590+00:00",
+      "status": "screened_safe",
+      "safety_reason": null,
+      "used_in_slug": null
+    }
+  ],
   "processed_issues": [],
   "processed_reply_ids": [],
   "last_cleanup": null
