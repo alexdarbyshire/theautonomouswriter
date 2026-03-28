@@ -16,13 +16,14 @@ TEST_KEY = Fernet.generate_key().decode()
 ENC_KEY = Fernet.generate_key().decode()
 
 
-def _make_comment(id="c1", subscriber_id="sub-1", email_id="email-1", body="Great post!", parent_id=None):
+def _make_comment(id="c1", subscriber_id="sub-1", email_id="email-1", body="Great post!"):
+    """Create a mock event matching Buttondown's /v1/events structure for event_type=replied."""
     return {
         "id": id,
         "subscriber_id": subscriber_id,
         "email_id": email_id,
-        "body": body,
-        "parent_id": parent_id,
+        "event_type": "replied",
+        "metadata": {"text": body},
         "creation_date": datetime.now(UTC).isoformat(),
     }
 
@@ -203,7 +204,14 @@ def test_ingest_short_comments_as_suggestions(mock_get):
     mock_get.return_value = {
         "results": [
             _make_comment(id="c1", body="Write about the philosophy of waiting rooms"),
-            _make_comment(id="c2", body="Great post, loved it!", parent_id="c0"),  # threaded — skip
+            {  # non-reply event — skip
+                "id": "c2",
+                "event_type": "delivered",
+                "subscriber_id": "sub-1",
+                "email_id": "email-1",
+                "metadata": {},
+                "creation_date": datetime.now(UTC).isoformat(),
+            },
             _make_comment(id="c3", body="x" * 301),  # too long — skip
         ],
     }
@@ -224,7 +232,6 @@ def test_ingest_short_comments_as_suggestions(mock_get):
     assert suggestions_data["suggestions"][0]["source"] == "newsletter"
     assert suggestions_data["suggestions"][0]["text"] == "Write about the philosophy of waiting rooms"
     assert "c1" in suggestions_data["processed_reply_ids"]
-    assert "c2" in suggestions_data["processed_reply_ids"]
     assert "c3" in suggestions_data["processed_reply_ids"]
 
 

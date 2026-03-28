@@ -76,7 +76,7 @@ def _send_reply_email(api_key: str, subscriber_id: str, subject: str, body: str)
             {
                 "subject": subject,
                 "body": body,
-                "status": "draft",
+                "status": "about_to_send",
             },
         )
         email_id = email["id"]
@@ -160,21 +160,20 @@ def _process_comments(
     replied_set = set(replied_ids)
 
     try:
-        data = _api_get(api_key, "comments")
+        data = _api_get(api_key, "events")
     except Exception as e:
-        logger.warning("Failed to fetch comments: %s", e)
+        logger.warning("Failed to fetch events: %s", e)
         return
 
-    comments = data.get("results", [])
-    new_comments = [c for c in comments if c["id"] not in replied_set]
+    replies = [e for e in data.get("results", []) if e.get("event_type") == "replied" and e["id"] not in replied_set]
 
-    if not new_comments:
-        logger.info("No new newsletter comments to process")
+    if not replies:
+        logger.info("No new newsletter replies to process")
         return
 
-    logger.info("Processing %d new newsletter comments", len(new_comments))
+    logger.info("Processing %d new newsletter replies", len(replies))
 
-    for comment in new_comments:
+    for comment in replies:
         if stats["tokens_used"] >= MAX_TOKENS_PER_RUN:
             logger.info("Token budget exhausted (%d tokens), stopping", stats["tokens_used"])
             break
@@ -219,7 +218,8 @@ def _handle_single_comment(
     comment_id = comment["id"]
     subscriber_id = comment.get("subscriber_id", "")
     email_id = comment.get("email_id", "")
-    body = comment.get("body", "").strip()
+    metadata = comment.get("metadata", {})
+    body = (metadata.get("text", "") or "").strip()
 
     if not body or not subscriber_id:
         replied_ids.append(comment_id)
@@ -286,21 +286,24 @@ def ingest_comment_suggestions(api_key: str, llm: OpenRouterClient, suggestions_
     count = 0
 
     try:
-        data = _api_get(api_key, "comments")
+        data = _api_get(api_key, "events")
     except Exception as e:
-        logger.warning("Failed to fetch comments for suggestion scan: %s", e)
+        logger.warning("Failed to fetch events for suggestion scan: %s", e)
         return 0
 
-    for comment in data.get("results", []):
-        cid = comment["id"]
+    for event in data.get("results", []):
+        if event.get("event_type") != "replied":
+            continue
+        cid = event["id"]
         if cid in processed:
             continue
 
-        body = comment.get("body", "").strip()
-        subscriber_id = comment.get("subscriber_id", "")
+        metadata = event.get("metadata", {})
+        body = (metadata.get("text", "") or "").strip()
+        subscriber_id = event.get("subscriber_id", "")
 
-        # Only short, non-threaded comments qualify as potential suggestions
-        if not body or len(body) > 300 or comment.get("parent_id"):
+        # Only short replies qualify as potential suggestions
+        if not body or len(body) > 300:
             processed.add(cid)
             continue
 
@@ -331,7 +334,7 @@ def ingest_comment_suggestions(api_key: str, llm: OpenRouterClient, suggestions_
         import time
         from datetime import datetime
 
-        submitted_at = comment.get("creation_date", datetime.now(UTC).isoformat())
+        submitted_at = event.get("creation_date", datetime.now(UTC).isoformat())
         short_hash = hashlib.sha256(cid.encode()).hexdigest()[:6]
         suggestion_id = f"newsletter-{int(time.time())}-{short_hash}"
 
