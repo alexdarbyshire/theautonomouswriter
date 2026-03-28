@@ -9,7 +9,7 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 ## Architecture
 
 **Execution flow** (in `agent/main.py`, steps must execute in this exact order):
-1. Load memory → 2. Bluesky replies (runs every cron, before schedule gate) → 3. Schedule check → 4. Context assembly → 5. Topic selection → 6. Research (feature-flagged, includes URLs for citations) → 7. Draft article → 8. Extract frontmatter → 9. Validate → 10. Write post → 11. Hugo build validation → 12. Social posting → 13. Reflect & evolve → 14. Memory update → 15. Newsletter (per-post notification + periodic recap letter)
+1. Load memory → 2. Bluesky replies (runs every cron, before schedule gate) → 3. Schedule check → 4. Context assembly → 4b. Suggestion screening (feature-flagged) → 5. Topic selection (with optional suggestion context) → 6. Research (feature-flagged, includes URLs for citations) → 7. Draft article → 8. Extract frontmatter → 9. Validate → 10. Write post → 11. Hugo build validation → 12. Social posting → 13. Reflect & evolve → 14. Memory update → 14b. Suggestion cleanup → 15. Newsletter (per-post notification + periodic recap letter)
 
 **Key modules:**
 - `agent/scheduler.py` — Deterministic scheduling via `next_scheduled_post` timestamp (not probabilistic). Two public functions: `should_post()`, `next_post_time()`.
@@ -21,9 +21,11 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 - `agent/newsletter.py` — Buttondown integration. `notify_new_post()` sends per-post emails. `maybe_send_recap()` sends a personal letter every 3 posts in the writer's voice.
 - `agent/bluesky_replies.py` — Responds to replies on own Bluesky posts. Safety-checked via Llama Guard 3, token-budgeted (50k/run), max 3 replies per thread with graceful sign-off on final reply.
 - `system/memory.json` — Flat-file database, committed to repo. Source of truth for scheduling, topic history, mood, and reflections.
+- `agent/suggestions.py` — Topic suggestion ingestion. Loads/saves `system/suggestions.json`, screens pending suggestions via Llama Guard, presents safe ones in topic prompt, encrypts submitter identifiers with Fernet. Feature-gated via `ENABLE_SUGGESTIONS`.
 - `system/bluesky_state.json` — Bluesky reply tracking (replied URIs, per-thread counts). Separate from memory.json to avoid bloat.
+- `system/suggestions.json` — Reader topic suggestions from web form, GitHub issues, and newsletter replies. Status lifecycle: `pending` → `screened_safe`/`screened_unsafe` → `used`/`expired`.
 
-**Two separate GitHub Actions workflows:** agent loop (`autonomous-loop.yml`) and Azure SWA deploy (triggered on push to main). Keep them decoupled.
+**Three GitHub Actions workflows:** agent loop (`autonomous-loop.yml`), Azure SWA deploy (triggered on push to main), and suggestion ingest (`ingest-suggestion.yml`, workflow_dispatch with concurrency group). Keep them decoupled.
 
 ## Commands
 
@@ -54,6 +56,8 @@ uv run pytest tests/
 - `BUTTONDOWN_USERNAME` — Buttondown account username
 - `ENABLE_BLUESKY_REPLIES` — Set to `'true'` to enable reply bot
 - `BLUESKY_HANDLE` / `BLUESKY_APP_PASSWORD` — Required for Bluesky features
+- `ENABLE_SUGGESTIONS` — Set to `'true'` to enable topic suggestion ingestion
+- `SUGGESTION_ENCRYPTION_KEY` — Fernet key for encrypting submitter identifiers
 
 ## Key Constraints
 

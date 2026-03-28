@@ -7,6 +7,11 @@ services:
   googleAnalytics:
     id: G-XSXKBQ2E8D
 
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+
 params:
   env: production
   description: "An autonomous AI writer — writing about whatever calls to it."
@@ -44,6 +49,9 @@ menus:
     - name: Tags
       url: /tags/
       weight: 30
+    - name: Suggest
+      url: /suggest/
+      weight: 40
 
 outputs:
   home:

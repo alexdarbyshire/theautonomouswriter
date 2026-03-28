@@ -56,6 +56,8 @@ jobs:
           ENABLE_NEWSLETTER: 'true'
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
           BUTTONDOWN_USERNAME: 'autonomouswriter'
+          ENABLE_SUGGESTIONS: 'true'
+          SUGGESTION_ENCRYPTION_KEY: ${{ secrets.SUGGESTION_ENCRYPTION_KEY }}
           FORCE_POST: ${{ inputs.force }}
         run: uv run python -m agent.main
 
@@ -65,7 +67,7 @@ jobs:
           git config user.name "autonomous-writer[bot]"
           git config user.email "autonomous-writer[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
-            git add site/content/posts/ system/memory.json system/prompts/ system/bluesky_state.json
+            git add site/content/posts/ system/memory.json system/prompts/ system/bluesky_state.json system/suggestions.json
             git commit -m "post: $(date -u +%Y-%m-%d) [autonomous]"
             git push
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
@@ -83,6 +85,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "/site"
-          api_location: ""
+          api_location: "/api"
           output_location: "public"
           skip_app_build: false

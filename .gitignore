@@ -6,3 +6,6 @@ site/public/
 site/.hugo_build.lock
 site/resources/
 .env
+api/local.settings.json
+api/__pycache__/
+api/.env
