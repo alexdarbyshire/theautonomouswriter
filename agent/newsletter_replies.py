@@ -5,7 +5,7 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +81,27 @@ def _encrypt_subscriber_id(subscriber_id: str, key: str) -> str:
     return f.encrypt(subscriber_id.encode()).decode()
 
 
+def _find_count_key(reply_counts: dict, email_id: str, subscriber_id: str, enc_key: str) -> tuple[str, int]:
+    """Find the existing count key for a subscriber by decrypting stored keys.
+
+    Returns (key, count). If no match found, creates a new encrypted key with count 0.
+    """
+    prefix = f"{email_id}:"
+    for stored_key, count in reply_counts.items():
+        if not stored_key.startswith(prefix):
+            continue
+        encrypted_sub = stored_key[len(prefix):]
+        try:
+            f = Fernet(enc_key.encode())
+            if f.decrypt(encrypted_sub.encode()).decode() == subscriber_id:
+                return stored_key, count
+        except (InvalidToken, Exception):
+            continue
+    # No existing entry — create new encrypted key
+    new_key = f"{email_id}:{_encrypt_subscriber_id(subscriber_id, enc_key)}"
+    return new_key, 0
+
+
 def respond_to_comments(llm, memory: dict, mood: str) -> dict:
     """Fetch newsletter comments and reply in the writer's voice.
 
@@ -98,10 +119,15 @@ def respond_to_comments(llm, memory: dict, mood: str) -> dict:
         logger.warning("BUTTONDOWN_API_KEY not set, skipping newsletter replies")
         return stats
 
+    enc_key = os.environ.get("SUGGESTION_ENCRYPTION_KEY", "")
+    if not enc_key:
+        logger.warning("SUGGESTION_ENCRYPTION_KEY not set, skipping newsletter replies")
+        return stats
+
     try:
         writer_identity = SYSTEM_PROMPT_PATH.read_text()
         state = _load_state()
-        _process_comments(api_key, llm, state, mood, writer_identity, stats)
+        _process_comments(api_key, llm, state, mood, writer_identity, stats, enc_key)
         _save_state(state)
     except Exception as e:
         logger.warning("Newsletter replies failed (non-critical): %s", e)
@@ -109,7 +135,7 @@ def respond_to_comments(llm, memory: dict, mood: str) -> dict:
     return stats
 
 
-def _process_comments(api_key, llm, state, mood, writer_identity, stats):
+def _process_comments(api_key, llm, state, mood, writer_identity, stats, enc_key):
     replied_ids = state["replied_ids"]
     reply_counts = state["subscriber_reply_counts"]
     replied_set = set(replied_ids)
@@ -137,7 +163,7 @@ def _process_comments(api_key, llm, state, mood, writer_identity, stats):
         try:
             _handle_single_comment(
                 api_key, llm, comment, mood, writer_identity,
-                reply_counts, replied_ids, replied_set, stats,
+                reply_counts, replied_ids, replied_set, stats, enc_key,
             )
         except Exception as e:
             logger.warning("Failed to process comment %s: %s", comment.get("id"), e)
@@ -153,7 +179,7 @@ def _process_comments(api_key, llm, state, mood, writer_identity, stats):
 
 def _handle_single_comment(
     api_key, llm, comment, mood, writer_identity,
-    reply_counts, replied_ids, replied_set, stats,
+    reply_counts, replied_ids, replied_set, stats, enc_key,
 ):
     comment_id = comment["id"]
     subscriber_id = comment.get("subscriber_id", "")
@@ -165,9 +191,8 @@ def _handle_single_comment(
         replied_set.add(comment_id)
         return
 
-    # Per-subscriber-per-email rate limit
-    count_key = f"{email_id}:{subscriber_id}"
-    current_count = reply_counts.get(count_key, 0)
+    # Per-subscriber-per-email rate limit (subscriber ID encrypted in state)
+    count_key, current_count = _find_count_key(reply_counts, email_id, subscriber_id, enc_key)
     if current_count >= MAX_REPLIES_PER_SUBSCRIBER_PER_EMAIL:
         logger.info("Reply limit reached for subscriber on email %s", email_id)
         replied_ids.append(comment_id)

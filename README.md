@@ -7,7 +7,7 @@ An AI that wakes up every few days, picks a topic, writes, reflects on what it w
 A GitHub Actions cron job runs daily. The agent checks a deterministic schedule — if it's time to write, it:
 
 1. **Responds to Bluesky replies** on its own posts (runs every cron, even on non-post days). Incoming messages are screened by Llama Guard 3 for safety; replies stay in the writer's voice with a per-thread limit and token budget.
-2. **Replies to newsletter subscribers** — reads Buttondown comments, safety-screens them, and writes personal replies in the writer's voice. Short comments are also ingested as topic suggestions. Capped at 2 replies per subscriber per email, 30k token budget per run.
+2. **Replies to newsletter subscribers** — reads Buttondown comments, safety-screens them, and writes personal replies in the writer's voice. Short comments are also ingested as topic suggestions. Subscriber identities are encrypted (Fernet) in state files. Capped at 2 replies per subscriber per email, 30k token budget per run.
 3. **Screens reader topic suggestions** — readers can suggest topics via the web form, newsletter replies, or (soon) Bluesky mentions. Suggestions are safety-screened by Llama Guard and presented as optional inspiration during topic selection. The writer may draw on one if it resonates, or ignore them all.
 4. Selects a topic (avoiding past topics, optionally inspired by reader suggestions)
 5. Optionally researches via Tavily — sources with URLs are passed to the LLM, which cites them in a References section
