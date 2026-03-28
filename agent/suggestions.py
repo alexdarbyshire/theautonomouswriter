@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from cryptography.fernet import Fernet, InvalidToken
+
+if TYPE_CHECKING:
+    from agent.llm import OpenRouterClient
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +66,7 @@ def check_rate_limit(
     window_days: int = 30,
 ) -> bool:
     """Return True if the user is within the rate limit, False if over."""
-    cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
+    cutoff = datetime.now(UTC) - timedelta(days=window_days)
     count = 0
     for s in suggestions.get("suggestions", []):
         if s.get("source") != source:
@@ -83,7 +89,7 @@ def check_rate_limit(
     return count < max_count
 
 
-def screen_pending(suggestions: dict, llm) -> None:
+def screen_pending(suggestions: dict, llm: OpenRouterClient) -> None:
     pending = [s for s in suggestions.get("suggestions", []) if s.get("status") == "pending"]
     for entry in pending[:MAX_SCREEN_PER_RUN]:
         try:
@@ -112,7 +118,7 @@ def mark_used(suggestions: dict, suggestion_id: str, slug: str) -> None:
 
 
 def cleanup(suggestions: dict) -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     remaining = []
     for s in suggestions.get("suggestions", []):
         submitted = s.get("submitted_at", "")
@@ -128,9 +134,9 @@ def cleanup(suggestions: dict) -> None:
         if status == "screened_safe" and age > timedelta(days=EXPIRE_SAFE_DAYS):
             s["status"] = "expired"
             remaining.append(s)
-        elif status == "screened_unsafe" and age > timedelta(days=REMOVE_UNSAFE_DAYS):
-            continue  # drop it
-        elif status in ("used", "expired") and age > timedelta(days=REMOVE_USED_DAYS):
+        elif (status == "screened_unsafe" and age > timedelta(days=REMOVE_UNSAFE_DAYS)) or (
+            status in ("used", "expired") and age > timedelta(days=REMOVE_USED_DAYS)
+        ):
             continue  # drop it
         else:
             remaining.append(s)

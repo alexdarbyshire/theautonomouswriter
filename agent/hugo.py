@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import json
 import logging
 import re
 import subprocess
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from agent.llm import OpenRouterClient
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from agent.llm import OpenRouterClient
 
 logger = logging.getLogger(__name__)
 

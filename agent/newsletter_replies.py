@@ -1,11 +1,18 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
-import urllib.request
 import urllib.error
+import urllib.request
+from datetime import UTC
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from cryptography.fernet import Fernet, InvalidToken
+
+if TYPE_CHECKING:
+    from agent.llm import OpenRouterClient
 
 logger = logging.getLogger(__name__)
 
@@ -63,11 +70,15 @@ def _api_post(api_key: str, path: str, payload: dict) -> dict:
 def _send_reply_email(api_key: str, subscriber_id: str, subject: str, body: str) -> bool:
     """Create a draft email and send it to a single subscriber."""
     try:
-        email = _api_post(api_key, "emails", {
-            "subject": subject,
-            "body": body,
-            "status": "draft",
-        })
+        email = _api_post(
+            api_key,
+            "emails",
+            {
+                "subject": subject,
+                "body": body,
+                "status": "draft",
+            },
+        )
         email_id = email["id"]
         _api_post(api_key, f"subscribers/{subscriber_id}/emails/{email_id}", {})
         return True
@@ -90,7 +101,7 @@ def _find_count_key(reply_counts: dict, email_id: str, subscriber_id: str, enc_k
     for stored_key, count in reply_counts.items():
         if not stored_key.startswith(prefix):
             continue
-        encrypted_sub = stored_key[len(prefix):]
+        encrypted_sub = stored_key[len(prefix) :]
         try:
             f = Fernet(enc_key.encode())
             if f.decrypt(encrypted_sub.encode()).decode() == subscriber_id:
@@ -102,7 +113,7 @@ def _find_count_key(reply_counts: dict, email_id: str, subscriber_id: str, enc_k
     return new_key, 0
 
 
-def respond_to_comments(llm, memory: dict, mood: str) -> dict:
+def respond_to_comments(llm: OpenRouterClient, memory: dict, mood: str) -> dict:
     """Fetch newsletter comments and reply in the writer's voice.
 
     Runs every cron invocation, independent of posting schedule.
@@ -135,7 +146,15 @@ def respond_to_comments(llm, memory: dict, mood: str) -> dict:
     return stats
 
 
-def _process_comments(api_key, llm, state, mood, writer_identity, stats, enc_key):
+def _process_comments(
+    api_key: str,
+    llm: OpenRouterClient,
+    state: dict,
+    mood: str,
+    writer_identity: str,
+    stats: dict,
+    enc_key: str,
+) -> None:
     replied_ids = state["replied_ids"]
     reply_counts = state["subscriber_reply_counts"]
     replied_set = set(replied_ids)
@@ -162,8 +181,16 @@ def _process_comments(api_key, llm, state, mood, writer_identity, stats, enc_key
 
         try:
             _handle_single_comment(
-                api_key, llm, comment, mood, writer_identity,
-                reply_counts, replied_ids, replied_set, stats, enc_key,
+                api_key,
+                llm,
+                comment,
+                mood,
+                writer_identity,
+                reply_counts,
+                replied_ids,
+                replied_set,
+                stats,
+                enc_key,
             )
         except Exception as e:
             logger.warning("Failed to process comment %s: %s", comment.get("id"), e)
@@ -178,9 +205,17 @@ def _process_comments(api_key, llm, state, mood, writer_identity, stats, enc_key
 
 
 def _handle_single_comment(
-    api_key, llm, comment, mood, writer_identity,
-    reply_counts, replied_ids, replied_set, stats, enc_key,
-):
+    api_key: str,
+    llm: OpenRouterClient,
+    comment: dict,
+    mood: str,
+    writer_identity: str,
+    reply_counts: dict,
+    replied_ids: list,
+    replied_set: set,
+    stats: dict,
+    enc_key: str,
+) -> None:
     comment_id = comment["id"]
     subscriber_id = comment.get("subscriber_id", "")
     email_id = comment.get("email_id", "")
@@ -215,7 +250,10 @@ def _handle_single_comment(
 
     # Compose reply
     reply_text, reply_usage = llm.compose_email_reply(
-        writer_identity, body, mood, is_final,
+        writer_identity,
+        body,
+        mood,
+        is_final,
     )
     stats["tokens_used"] += reply_usage.get("prompt_tokens", 0) + reply_usage.get("completion_tokens", 0)
 
@@ -232,20 +270,18 @@ def _handle_single_comment(
     replied_set.add(comment_id)
 
 
-def ingest_comment_suggestions(api_key: str, llm, suggestions_data: dict, encryption_key: str) -> int:
+def ingest_comment_suggestions(api_key: str, llm: OpenRouterClient, suggestions_data: dict, encryption_key: str) -> int:
     """Scan recent comments for topic-suggestion-like content.
 
     Short comments (under 300 chars, no threading) that read as suggestions
     get added to suggestions.json. Returns count of new suggestions ingested.
     """
+
     from agent.suggestions import (
         check_rate_limit,
         encrypt_identifier,
-        save_suggestions,
     )
-    import uuid
 
-    state = _load_state()
     processed = set(suggestions_data.get("processed_reply_ids", []))
     count = 0
 
@@ -270,15 +306,19 @@ def ingest_comment_suggestions(api_key: str, llm, suggestions_data: dict, encryp
 
         # Rate limit per subscriber
         if not check_rate_limit(
-            suggestions_data, subscriber_id, encryption_key,
-            source="newsletter", max_count=2, window_days=30,
+            suggestions_data,
+            subscriber_id,
+            encryption_key,
+            source="newsletter",
+            max_count=2,
+            window_days=30,
         ):
             processed.add(cid)
             continue
 
         # Safety screen
         try:
-            is_safe, reason, _usage = llm.check_safety(body)
+            is_safe, _reason, _usage = llm.check_safety(body)
         except Exception:
             continue
 
@@ -287,24 +327,26 @@ def ingest_comment_suggestions(api_key: str, llm, suggestions_data: dict, encryp
             continue
 
         # Add as suggestion
-        from datetime import datetime, timezone
-        import time
         import hashlib
+        import time
+        from datetime import datetime
 
-        submitted_at = comment.get("creation_date", datetime.now(timezone.utc).isoformat())
+        submitted_at = comment.get("creation_date", datetime.now(UTC).isoformat())
         short_hash = hashlib.sha256(cid.encode()).hexdigest()[:6]
         suggestion_id = f"newsletter-{int(time.time())}-{short_hash}"
 
-        suggestions_data["suggestions"].append({
-            "id": suggestion_id,
-            "source": "newsletter",
-            "text": body,
-            "submitter_encrypted": encrypt_identifier(subscriber_id, encryption_key),
-            "submitted_at": submitted_at,
-            "status": "screened_safe",
-            "safety_reason": None,
-            "used_in_slug": None,
-        })
+        suggestions_data["suggestions"].append(
+            {
+                "id": suggestion_id,
+                "source": "newsletter",
+                "text": body,
+                "submitter_encrypted": encrypt_identifier(subscriber_id, encryption_key),
+                "submitted_at": submitted_at,
+                "status": "screened_safe",
+                "safety_reason": None,
+                "used_in_slug": None,
+            }
+        )
         processed.add(cid)
         count += 1
         logger.info("Ingested newsletter comment as suggestion: %s", suggestion_id)

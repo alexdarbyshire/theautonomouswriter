@@ -2,22 +2,24 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
+from agent.bluesky import post_to_bluesky
+from agent.bluesky_replies import respond_to_mentions
 from agent.evolve import reflect_and_evolve
 from agent.hugo import validate_and_fix
 from agent.images import generate_cover_image
 from agent.llm import LLMUnavailableError, OpenRouterClient
 from agent.memory import load_memory, save_memory
-from agent.bluesky import post_to_bluesky
-from agent.bluesky_replies import respond_to_mentions
-from agent.newsletter import notify_new_post, maybe_send_recap
-from agent.newsletter_replies import respond_to_comments, ingest_comment_suggestions
+from agent.newsletter import maybe_send_recap, notify_new_post
+from agent.newsletter_replies import ingest_comment_suggestions, respond_to_comments
 from agent.researcher import research_topic
 from agent.scheduler import next_post_time, should_post
 from agent.suggestions import (
     cleanup as cleanup_suggestions,
+)
+from agent.suggestions import (
     format_suggestions_for_prompt,
     get_safe_suggestions,
     load_suggestions,
@@ -52,7 +54,9 @@ def main() -> None:
         if reply_stats["replies_sent"] > 0:
             logger.info(
                 "Bluesky replies: %d sent, %d tokens, %d skipped unsafe",
-                reply_stats["replies_sent"], reply_stats["tokens_used"], reply_stats["skipped_unsafe"],
+                reply_stats["replies_sent"],
+                reply_stats["tokens_used"],
+                reply_stats["skipped_unsafe"],
             )
     except LLMUnavailableError:
         logger.warning("LLM unavailable for Bluesky replies, continuing")
@@ -66,7 +70,9 @@ def main() -> None:
         if comment_stats["replies_sent"] > 0:
             logger.info(
                 "Newsletter replies: %d sent, %d tokens, %d skipped unsafe",
-                comment_stats["replies_sent"], comment_stats["tokens_used"], comment_stats["skipped_unsafe"],
+                comment_stats["replies_sent"],
+                comment_stats["tokens_used"],
+                comment_stats["skipped_unsafe"],
             )
     except LLMUnavailableError:
         logger.warning("LLM unavailable for newsletter replies, continuing")
@@ -151,7 +157,9 @@ def main() -> None:
             "but only if it serves the piece. Don't force it.\n\n"
         )
     if research_context:
-        draft_prompt += "Here is some current research context to inform your writing (use these sources where relevant):\n"
+        draft_prompt += (
+            "Here is some current research context to inform your writing (use these sources where relevant):\n"
+        )
         for i, src in enumerate(research_context, 1):
             draft_prompt += f"{i}. [{src['title']}]({src['url']}): {src['content']}\n"
         draft_prompt += (
@@ -190,7 +198,7 @@ def main() -> None:
         sys.exit(1)
 
     # Override date with actual system date — LLM can hallucinate the date
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     frontmatter_data["date"] = today
 
     # Fill in the slug on the used suggestion now that we have it
@@ -207,7 +215,10 @@ def main() -> None:
 
     # 7b. Cover image generation (feature-flagged, non-critical)
     cover_image_bytes = generate_cover_image(
-        llm, frontmatter_data["title"], frontmatter_data["description"], mood,
+        llm,
+        frontmatter_data["title"],
+        frontmatter_data["description"],
+        mood,
     )
 
     # 8. Filesystem write
@@ -276,7 +287,7 @@ def main() -> None:
         memory["past_reflections"] = reflections
 
     # 10. Memory update
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     memory["past_topics"].append(topic)
     memory["past_slugs"].append(slug)
     memory["last_run_timestamp"] = now.isoformat()
@@ -285,7 +296,11 @@ def main() -> None:
     memory["total_posts_written"] = memory.get("total_posts_written", 0) + 1
     memory["consecutive_skip_count"] = 0
     save_memory(memory)
-    logger.info("Memory updated. Mood: %s. Next post: %s", memory["current_persona_mood"], memory["next_scheduled_post"])
+    logger.info(
+        "Memory updated. Mood: %s. Next post: %s",
+        memory["current_persona_mood"],
+        memory["next_scheduled_post"],
+    )
 
     # 10b. Suggestion cleanup
     if suggestions_data is not None:

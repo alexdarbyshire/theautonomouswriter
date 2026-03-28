@@ -1,8 +1,6 @@
 import base64
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from agent.images import (
     _build_image_prompt,
     _generate_all,

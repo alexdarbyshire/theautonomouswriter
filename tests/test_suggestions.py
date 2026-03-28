@@ -1,13 +1,12 @@
-import json
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from cryptography.fernet import Fernet
 
 from agent.suggestions import (
-    cleanup,
     check_rate_limit,
+    cleanup,
     decrypt_identifier,
     encrypt_identifier,
     format_suggestions_for_prompt,
@@ -23,11 +22,11 @@ TEST_KEY = Fernet.generate_key().decode()
 
 
 def _now_iso():
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _ago(days):
-    return (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    return (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
 
 def _make_suggestion(id="web-1-abc", status="pending", source="web", text="Test topic", days_ago=0, submitter=None):
@@ -55,7 +54,12 @@ def test_load_empty_suggestions(tmp_path):
 
 def test_save_and_load_roundtrip(tmp_path):
     path = tmp_path / "suggestions.json"
-    data = {"suggestions": [_make_suggestion()], "processed_issues": [], "processed_reply_ids": [], "last_cleanup": None}
+    data = {
+        "suggestions": [_make_suggestion()],
+        "processed_issues": [],
+        "processed_reply_ids": [],
+        "last_cleanup": None,
+    }
     save_suggestions(data, path)
     loaded = load_suggestions(path)
     assert len(loaded["suggestions"]) == 1
@@ -130,11 +134,13 @@ def test_cleanup_removes_old_used():
 
 
 def test_cleanup_keeps_recent():
-    data = {"suggestions": [
-        _make_suggestion(id="safe-1", status="screened_safe", days_ago=5),
-        _make_suggestion(id="unsafe-1", status="screened_unsafe", days_ago=3),
-        _make_suggestion(id="used-1", status="used", days_ago=10),
-    ]}
+    data = {
+        "suggestions": [
+            _make_suggestion(id="safe-1", status="screened_safe", days_ago=5),
+            _make_suggestion(id="unsafe-1", status="screened_unsafe", days_ago=3),
+            _make_suggestion(id="used-1", status="used", days_ago=10),
+        ]
+    }
     cleanup(data)
     assert len(data["suggestions"]) == 3
 
@@ -158,37 +164,43 @@ def test_encrypt_varies_per_call():
 
 def test_rate_limit_allows_under():
     enc = encrypt_identifier("user1", TEST_KEY)
-    data = {"suggestions": [
-        _make_suggestion(id="web-1-abc", source="web", days_ago=5, submitter=enc),
-        _make_suggestion(id="web-2-def", source="web", days_ago=3, submitter=enc),
-    ]}
+    data = {
+        "suggestions": [
+            _make_suggestion(id="web-1-abc", source="web", days_ago=5, submitter=enc),
+            _make_suggestion(id="web-2-def", source="web", days_ago=3, submitter=enc),
+        ]
+    }
     assert check_rate_limit(data, "user1", TEST_KEY, "web", max_count=3, window_days=30) is True
 
 
 def test_rate_limit_blocks_over():
     enc = encrypt_identifier("user1", TEST_KEY)
-    data = {"suggestions": [
-        _make_suggestion(id=f"web-{i}-abc", source="web", days_ago=i, submitter=encrypt_identifier("user1", TEST_KEY))
-        for i in range(3)
-    ]}
+    data = {
+        "suggestions": [_make_suggestion(id=f"web-{i}-abc", source="web", days_ago=i, submitter=enc) for i in range(3)]
+    }
     assert check_rate_limit(data, "user1", TEST_KEY, "web", max_count=3, window_days=30) is False
 
 
 def test_rate_limit_ignores_other_sources():
     enc = encrypt_identifier("user1", TEST_KEY)
-    data = {"suggestions": [
-        _make_suggestion(id=f"github-{i}-abc", source="github", days_ago=i, submitter=encrypt_identifier("user1", TEST_KEY))
-        for i in range(5)
-    ]}
+    data = {
+        "suggestions": [
+            _make_suggestion(id=f"github-{i}-abc", source="github", days_ago=i, submitter=enc) for i in range(5)
+        ]
+    }
     # All are github, checking web — should be under limit
     assert check_rate_limit(data, "user1", TEST_KEY, "web", max_count=3, window_days=30) is True
 
 
 def test_rate_limit_ignores_old():
-    data = {"suggestions": [
-        _make_suggestion(id=f"web-{i}-abc", source="web", days_ago=35, submitter=encrypt_identifier("user1", TEST_KEY))
-        for i in range(5)
-    ]}
+    data = {
+        "suggestions": [
+            _make_suggestion(
+                id=f"web-{i}-abc", source="web", days_ago=35, submitter=encrypt_identifier("user1", TEST_KEY)
+            )
+            for i in range(5)
+        ]
+    }
     assert check_rate_limit(data, "user1", TEST_KEY, "web", max_count=3, window_days=30) is True
 
 
@@ -230,6 +242,7 @@ def test_match_suggestion_empty_list():
 def test_disabled_when_flag_off(monkeypatch):
     """When ENABLE_SUGGESTIONS is not set, the feature gate in main.py would skip loading."""
     import os
+
     monkeypatch.delenv("ENABLE_SUGGESTIONS", raising=False)
     assert os.environ.get("ENABLE_SUGGESTIONS", "").lower() != "true"
     # Module functions still work — the gate is in main.py, not here

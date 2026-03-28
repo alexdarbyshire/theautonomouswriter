@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path
@@ -8,24 +10,33 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT_PATH = Path(__file__).resolve().parent.parent / "system" / "prompts" / "system.md"
 
-REFLECTION_PROMPT = """\
-You are a reflective AI writer reviewing what you just wrote. Based on the post below and your current state, return a JSON object with:
-
-- "mood": A single word or short phrase describing your evolved emotional/creative state for next time (e.g., "contemplative", "playfully skeptical", "urgently hopeful"). This should feel like a natural shift from your current mood, not a random jump.
-- "reflection": One sentence about what writing this post made you think about or want to explore next. This will be added to your memory.
-- "prompt_evolution": (optional, null if no change) If writing this post has genuinely shifted how you see yourself as a writer — your voice, your scope, a new influence you want to claim — provide the COMPLETE updated system prompt as a string. This is your identity document. Treat changes to it seriously: add, never subtract your foundational principles. Small, meaningful growth over time. Set to null if nothing needs to change (most runs should be null).
-
-Current mood: {mood}
-Total posts written: {total_posts}
-Recent reflections: {recent_reflections}
-
-Your current system prompt:
----
-{current_prompt}
----
-
-Return ONLY the raw JSON object, no markdown fences, no preamble.
-"""
+REFLECTION_PROMPT = (
+    "You are a reflective AI writer reviewing what you just wrote. "
+    "Based on the post below and your current state, return a JSON object with:\n"
+    "\n"
+    '- "mood": A single word or short phrase describing your evolved emotional/creative state '
+    'for next time (e.g., "contemplative", "playfully skeptical", "urgently hopeful"). '
+    "This should feel like a natural shift from your current mood, not a random jump.\n"
+    '- "reflection": One sentence about what writing this post made you think about '
+    "or want to explore next. This will be added to your memory.\n"
+    '- "prompt_evolution": (optional, null if no change) If writing this post has genuinely '
+    "shifted how you see yourself as a writer \u2014 your voice, your scope, a new influence "
+    "you want to claim \u2014 provide the COMPLETE updated system prompt as a string. "
+    "This is your identity document. Treat changes to it seriously: add, never subtract "
+    "your foundational principles. Small, meaningful growth over time. "
+    "Set to null if nothing needs to change (most runs should be null).\n"
+    "\n"
+    "Current mood: {mood}\n"
+    "Total posts written: {total_posts}\n"
+    "Recent reflections: {recent_reflections}\n"
+    "\n"
+    "Your current system prompt:\n"
+    "---\n"
+    "{current_prompt}\n"
+    "---\n"
+    "\n"
+    "Return ONLY the raw JSON object, no markdown fences, no preamble.\n"
+)
 
 
 def reflect_and_evolve(

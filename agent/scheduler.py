@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 
 def should_post(memory: dict) -> bool:
@@ -8,10 +8,10 @@ def should_post(memory: dict) -> bool:
         return True
     scheduled_time = datetime.fromisoformat(next_scheduled)
     if scheduled_time.tzinfo is None:
-        scheduled_time = scheduled_time.replace(tzinfo=timezone.utc)
-    return datetime.now(timezone.utc) >= scheduled_time
+        scheduled_time = scheduled_time.replace(tzinfo=UTC)
+    return datetime.now(UTC) >= scheduled_time
 
 
 def next_post_time() -> datetime:
     days = random.uniform(3.5, 5.5)
-    return datetime.now(timezone.utc) + timedelta(days=days)
+    return datetime.now(UTC) + timedelta(days=days)

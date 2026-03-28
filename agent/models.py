@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, field_validator
-from datetime import date
 import re
+from datetime import date
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class PostFrontmatter(BaseModel):
@@ -14,7 +15,7 @@ class PostFrontmatter(BaseModel):
     @field_validator("slug")
     @classmethod
     def slug_format(cls, v: str) -> str:
-        if not re.match(r'^[a-z0-9]+(?:-[a-z0-9]+)*$', v):
+        if not re.match(r"^[a-z0-9]+(?:-[a-z0-9]+)*$", v):
             raise ValueError("Slug must be lowercase kebab-case")
         return v
 

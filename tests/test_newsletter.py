@@ -1,7 +1,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from agent.newsletter import notify_new_post, maybe_send_recap, _get_recent_posts
+from agent.newsletter import maybe_send_recap, notify_new_post
 
 
 def test_notify_disabled_when_flag_off(monkeypatch):
@@ -59,13 +59,13 @@ def test_recap_sends_when_threshold_reached(monkeypatch, tmp_path):
 
     # Create fake post files
     for i in range(3):
-        post_dir = tmp_path / f"2026-03-{20+i:02d}-post-{i}"
+        post_dir = tmp_path / f"2026-03-{20 + i:02d}-post-{i}"
         post_dir.mkdir()
         fm = {
             "title": f"Post {i}",
             "slug": f"post-{i}",
             "description": f"Description {i}",
-            "date": f"2026-03-{20+i:02d}",
+            "date": f"2026-03-{20 + i:02d}",
             "tags": ["test"],
             "draft": False,
         }
@@ -82,18 +82,22 @@ def test_recap_sends_when_threshold_reached(monkeypatch, tmp_path):
     }
 
     mock_llm = MagicMock()
-    mock_llm.compose_newsletter.return_value = json.dumps({
-        "subject": "Recap: Recent Musings",
-        "body": "Here are my recent posts...",
-    })
+    mock_llm.compose_newsletter.return_value = json.dumps(
+        {
+            "subject": "Recap: Recent Musings",
+            "body": "Here are my recent posts...",
+        }
+    )
 
     mock_resp = MagicMock()
     mock_resp.status = 200
     mock_resp.__enter__ = lambda s: s
     mock_resp.__exit__ = MagicMock(return_value=False)
 
-    with patch("agent.newsletter.POSTS_DIR", tmp_path), \
-         patch("agent.newsletter.urllib.request.urlopen", return_value=mock_resp):
+    with (
+        patch("agent.newsletter.POSTS_DIR", tmp_path),
+        patch("agent.newsletter.urllib.request.urlopen", return_value=mock_resp),
+    ):
         result = maybe_send_recap(memory, mock_llm, "You are a writer...")
 
     assert result is True

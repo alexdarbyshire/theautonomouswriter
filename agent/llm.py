@@ -1,7 +1,6 @@
-import json
 import logging
-import time
 import os
+import time
 
 from openai import OpenAI
 
@@ -13,7 +12,7 @@ class LLMUnavailableError(Exception):
 
 
 class OpenRouterClient:
-    def __init__(self):
+    def __init__(self) -> None:
         api_key = os.environ.get("OPENROUTER_API_KEY")
         if not api_key:
             raise LLMUnavailableError("OPENROUTER_API_KEY not set")
@@ -40,10 +39,18 @@ class OpenRouterClient:
             except Exception as e:
                 error_str = str(e)
                 status = getattr(e, "status_code", None)
-                retryable = status in (429, 500, 502, 503, 504) if status else "429" in error_str or "5" in error_str[:1]
+                retryable = (
+                    status in (429, 500, 502, 503, 504) if status else "429" in error_str or "5" in error_str[:1]
+                )
                 if retryable and attempt < self.max_retries - 1:
-                    wait = 2 ** attempt
-                    logger.warning("LLM call failed (attempt %d/%d), retrying in %ds: %s", attempt + 1, self.max_retries, wait, e)
+                    wait = 2**attempt
+                    logger.warning(
+                        "LLM call failed (attempt %d/%d), retrying in %ds: %s",
+                        attempt + 1,
+                        self.max_retries,
+                        wait,
+                        e,
+                    )
                     time.sleep(wait)
                     continue
                 raise LLMUnavailableError(f"LLM unavailable after {attempt + 1} attempts: {e}") from e
@@ -83,21 +90,22 @@ class OpenRouterClient:
             },
             {
                 "role": "user",
-                "content": (
-                    f"Article title: {title}\n"
-                    f"Description: {description}\n"
-                    f"Your current mood: {mood}"
-                ),
+                "content": (f"Article title: {title}\nDescription: {description}\nYour current mood: {mood}"),
             },
         ]
         return self._call(messages, temperature=0.8, max_tokens=80).strip()
 
-    def compose_newsletter(self, writer_identity: str, post_list: str, mood: str, reflections: list[str] | None = None) -> str:
+    def compose_newsletter(
+        self,
+        writer_identity: str,
+        post_list: str,
+        mood: str,
+        reflections: list[str] | None = None,
+    ) -> str:
         reflections_block = ""
         if reflections:
-            reflections_block = (
-                "\n\nYour recent reflections (private thoughts after writing each post):\n"
-                + "\n".join(f"- {r}" for r in reflections)
+            reflections_block = "\n\nYour recent reflections (private thoughts after writing each post):\n" + "\n".join(
+                f"- {r}" for r in reflections
             )
         messages = [
             {
@@ -118,11 +126,7 @@ class OpenRouterClient:
             },
             {
                 "role": "user",
-                "content": (
-                    f"Your current mood: {mood}\n"
-                    f"{reflections_block}\n\n"
-                    f"Recent posts:\n{post_list}"
-                ),
+                "content": (f"Your current mood: {mood}\n{reflections_block}\n\nRecent posts:\n{post_list}"),
             },
         ]
         return self._call(messages, temperature=0.8, max_tokens=1000)
@@ -140,15 +144,18 @@ class OpenRouterClient:
             {
                 "role": "user",
                 "content": (
-                    f"Current frontmatter:\n```\n{current_frontmatter}```\n\n"
-                    f"Hugo error:\n```\n{hugo_error}```"
+                    f"Current frontmatter:\n```\n{current_frontmatter}```\n\nHugo error:\n```\n{hugo_error}```"
                 ),
             },
         ]
         return self._call(messages, temperature=0.1, max_tokens=400)
 
     def _call_with_usage(
-        self, messages: list[dict], temperature: float, max_tokens: int, model: str | None = None,
+        self,
+        messages: list[dict],
+        temperature: float,
+        max_tokens: int,
+        model: str | None = None,
     ) -> tuple[str, dict]:
         """Like _call but returns (content, usage_dict) with token counts."""
         use_model = model or self.model
@@ -170,10 +177,18 @@ class OpenRouterClient:
             except Exception as e:
                 error_str = str(e)
                 status = getattr(e, "status_code", None)
-                retryable = status in (429, 500, 502, 503, 504) if status else "429" in error_str or "5" in error_str[:1]
+                retryable = (
+                    status in (429, 500, 502, 503, 504) if status else "429" in error_str or "5" in error_str[:1]
+                )
                 if retryable and attempt < self.max_retries - 1:
-                    wait = 2 ** attempt
-                    logger.warning("LLM call failed (attempt %d/%d), retrying in %ds: %s", attempt + 1, self.max_retries, wait, e)
+                    wait = 2**attempt
+                    logger.warning(
+                        "LLM call failed (attempt %d/%d), retrying in %ds: %s",
+                        attempt + 1,
+                        self.max_retries,
+                        wait,
+                        e,
+                    )
                     time.sleep(wait)
                     continue
                 raise LLMUnavailableError(f"LLM unavailable after {attempt + 1} attempts: {e}") from e
@@ -184,7 +199,10 @@ class OpenRouterClient:
             {"role": "user", "content": text},
         ]
         content, usage = self._call_with_usage(
-            messages, temperature=0.0, max_tokens=100, model=self.safety_model,
+            messages,
+            temperature=0.0,
+            max_tokens=100,
+            model=self.safety_model,
         )
         # Llama Guard returns "safe" or "unsafe\nS1,S2,..."
         content = content.strip()
@@ -193,7 +211,11 @@ class OpenRouterClient:
         return is_safe, reason, usage
 
     def compose_email_reply(
-        self, writer_identity: str, reader_message: str, mood: str, is_final: bool = False,
+        self,
+        writer_identity: str,
+        reader_message: str,
+        mood: str,
+        is_final: bool = False,
     ) -> tuple[str, dict]:
         """Compose a reply to a newsletter subscriber. Returns (text, usage)."""
         closing_note = ""
