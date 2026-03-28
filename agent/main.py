@@ -13,6 +13,7 @@ from agent.memory import load_memory, save_memory
 from agent.bluesky import post_to_bluesky
 from agent.bluesky_replies import respond_to_mentions
 from agent.newsletter import notify_new_post, maybe_send_recap
+from agent.newsletter_replies import respond_to_comments, ingest_comment_suggestions
 from agent.researcher import research_topic
 from agent.scheduler import next_post_time, should_post
 from agent.suggestions import (
@@ -57,6 +58,19 @@ def main() -> None:
         logger.warning("LLM unavailable for Bluesky replies, continuing")
         llm = None
 
+    # 2b. Newsletter replies — runs every cron, before schedule gate
+    try:
+        if llm is None:
+            llm = OpenRouterClient()
+        comment_stats = respond_to_comments(llm, memory, mood)
+        if comment_stats["replies_sent"] > 0:
+            logger.info(
+                "Newsletter replies: %d sent, %d tokens, %d skipped unsafe",
+                comment_stats["replies_sent"], comment_stats["tokens_used"], comment_stats["skipped_unsafe"],
+            )
+    except LLMUnavailableError:
+        logger.warning("LLM unavailable for newsletter replies, continuing")
+
     # 3. Schedule check
     force = os.environ.get("FORCE_POST", "").lower() == "true"
     if force:
@@ -84,6 +98,15 @@ def main() -> None:
     if os.environ.get("ENABLE_SUGGESTIONS", "").lower() == "true":
         try:
             suggestions_data = load_suggestions()
+
+            # Ingest newsletter comments as suggestions
+            api_key = os.environ.get("BUTTONDOWN_API_KEY", "")
+            enc_key = os.environ.get("SUGGESTION_ENCRYPTION_KEY", "")
+            if api_key and enc_key and os.environ.get("ENABLE_NEWSLETTER_REPLIES", "").lower() == "true":
+                ingested = ingest_comment_suggestions(api_key, llm, suggestions_data, enc_key)
+                if ingested:
+                    logger.info("Ingested %d newsletter comments as suggestions", ingested)
+
             screen_pending(suggestions_data, llm)
             safe = get_safe_suggestions(suggestions_data)
             if safe:

@@ -60,7 +60,10 @@ def notify_new_post(title: str, description: str, slug: str) -> bool:
     api_key, _ = config
     url = f"{BASE_URL}{slug}/"
     subject = title
-    body = f"{description}\n\n[Read the full post]({url})"
+    body = (
+        f"{description}\n\n[Read the full post]({url})"
+        "\n\n---\n*Have a topic you'd like me to explore? Just reply to this email.*"
+    )
 
     try:
         _send_email(api_key, subject, body)

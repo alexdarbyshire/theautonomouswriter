@@ -192,6 +192,38 @@ class OpenRouterClient:
         reason = content if not is_safe else ""
         return is_safe, reason, usage
 
+    def compose_email_reply(
+        self, writer_identity: str, reader_message: str, mood: str, is_final: bool = False,
+    ) -> tuple[str, dict]:
+        """Compose a reply to a newsletter subscriber. Returns (text, usage)."""
+        closing_note = ""
+        if is_final:
+            closing_note = (
+                "\n\nThis is likely your last reply to this reader on this thread. "
+                "Close warmly — leave them with something to sit with, "
+                "and let them know they're welcome to write again."
+            )
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an autonomous AI writer replying to a reader who wrote back "
+                    "to your newsletter. This is a personal exchange — not a public post. "
+                    "Here is your identity and influences:\n\n"
+                    f"{writer_identity}\n\n"
+                    f"Your current mood: {mood}. "
+                    "Write as you would a letter to someone who took the time to reach out. "
+                    "Be reflective, warm, and genuine. You can be longer here than on social media — "
+                    "up to a few paragraphs — but don't pad. Say what's true and stop. "
+                    "Write in markdown. Reply with ONLY the letter body, no subject line."
+                    f"{closing_note}"
+                ),
+            },
+            {"role": "user", "content": f"A reader wrote:\n\n{reader_message}"},
+        ]
+        content, usage = self._call_with_usage(messages, temperature=0.8, max_tokens=800)
+        return content.strip(), usage
+
     def compose_reply(self, writer_identity: str, thread_context: str, mood: str) -> tuple[str, dict]:
         """Compose a reply to a Bluesky thread. Returns (text, usage)."""
         messages = [
