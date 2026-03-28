@@ -9,11 +9,11 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 ## Architecture
 
 **Execution flow** (in `agent/main.py`, steps must execute in this exact order):
-1. Load memory → 2. Bluesky replies (runs every cron, before schedule gate) → 3. Schedule check → 4. Context assembly → 4b. Suggestion screening (feature-flagged) → 5. Topic selection (with optional suggestion context) → 6. Research (feature-flagged, includes URLs for citations) → 7. Draft article → 8. Extract frontmatter → 9. Validate → 10. Write post → 11. Hugo build validation → 12. Social posting → 13. Reflect & evolve → 14. Memory update → 14b. Suggestion cleanup → 15. Newsletter (per-post notification + periodic recap letter)
+1. Load memory → 2. Bluesky replies (runs every cron, before schedule gate) → 2b. Newsletter replies (runs every cron, before schedule gate) → 3. Schedule check → 4. Context assembly → 4b. Suggestion screening + newsletter comment ingestion (feature-flagged) → 5. Topic selection (with optional suggestion context) → 6. Research (feature-flagged, includes URLs for citations) → 7. Draft article → 8. Extract frontmatter → 9. Validate → 10. Write post → 11. Hugo build validation → 12. Social posting → 13. Reflect & evolve → 14. Memory update → 14b. Suggestion cleanup → 15. Newsletter (per-post notification + periodic recap letter)
 
 **Key modules:**
 - `agent/scheduler.py` — Deterministic scheduling via `next_scheduled_post` timestamp (not probabilistic). Two public functions: `should_post()`, `next_post_time()`.
-- `agent/llm.py` — OpenRouter client class. Retry 3x with `2^n` backoff on 429/5xx. 90s timeout. Raises `LLMUnavailableError` on exhaustion. Also provides `check_safety()` (Llama Guard 3 8B), `compose_reply()`, `compose_newsletter()`, and `_call_with_usage()` for token tracking.
+- `agent/llm.py` — OpenRouter client class. Retry 3x with `2^n` backoff on 429/5xx. 90s timeout. Raises `LLMUnavailableError` on exhaustion. Also provides `check_safety()` (Llama Guard 3 8B), `compose_reply()`, `compose_email_reply()`, `compose_newsletter()`, and `_call_with_usage()` for token tracking.
 - `agent/validator.py` — Six named checks, each returns `(bool, str)`. Halts on first failure.
 - `agent/memory.py` — Atomic writes (write to `.tmp`, then `os.replace`).
 - `agent/models.py` — Pydantic v2 models for frontmatter validation.
@@ -22,7 +22,9 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 - `agent/bluesky_replies.py` — Responds to replies on own Bluesky posts. Safety-checked via Llama Guard 3, token-budgeted (50k/run), max 3 replies per thread with graceful sign-off on final reply.
 - `system/memory.json` — Flat-file database, committed to repo. Source of truth for scheduling, topic history, mood, and reflections.
 - `agent/suggestions.py` — Topic suggestion ingestion. Loads/saves `system/suggestions.json`, screens pending suggestions via Llama Guard, presents safe ones in topic prompt, encrypts submitter identifiers with Fernet. Feature-gated via `ENABLE_SUGGESTIONS`.
+- `agent/newsletter_replies.py` — Responds to Buttondown subscriber comments. Safety-checked via Llama Guard 3, token-budgeted (30k/run), max 2 replies per subscriber per email. Also ingests short comments as topic suggestions. Feature-gated via `ENABLE_NEWSLETTER_REPLIES`.
 - `system/bluesky_state.json` — Bluesky reply tracking (replied URIs, per-thread counts). Separate from memory.json to avoid bloat.
+- `system/newsletter_reply_state.json` — Newsletter reply tracking (replied comment IDs, per-subscriber-per-email counts).
 - `system/suggestions.json` — Reader topic suggestions from web form, GitHub issues, and newsletter replies. Status lifecycle: `pending` → `screened_safe`/`screened_unsafe` → `used`/`expired`.
 
 **Three GitHub Actions workflows:** agent loop (`autonomous-loop.yml`), Azure SWA deploy (triggered on push to main), and suggestion ingest (`ingest-suggestion.yml`, workflow_dispatch with concurrency group). Keep them decoupled.
@@ -56,6 +58,7 @@ uv run pytest tests/
 - `BUTTONDOWN_USERNAME` — Buttondown account username
 - `ENABLE_BLUESKY_REPLIES` — Set to `'true'` to enable reply bot
 - `BLUESKY_HANDLE` / `BLUESKY_APP_PASSWORD` — Required for Bluesky features
+- `ENABLE_NEWSLETTER_REPLIES` — Set to `'true'` to enable newsletter reply bot and comment suggestion ingestion
 - `ENABLE_SUGGESTIONS` — Set to `'true'` to enable topic suggestion ingestion
 - `SUGGESTION_ENCRYPTION_KEY` — Fernet key for encrypting submitter identifiers
 

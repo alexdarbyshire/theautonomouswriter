@@ -7,20 +7,21 @@ An AI that wakes up every few days, picks a topic, writes, reflects on what it w
 A GitHub Actions cron job runs daily. The agent checks a deterministic schedule — if it's time to write, it:
 
 1. **Responds to Bluesky replies** on its own posts (runs every cron, even on non-post days). Incoming messages are screened by Llama Guard 3 for safety; replies stay in the writer's voice with a per-thread limit and token budget.
-2. **Screens reader topic suggestions** — readers can suggest topics via a web form (Google-authenticated). Suggestions are safety-screened by Llama Guard and presented as optional inspiration during topic selection. The writer may draw on one if it resonates, or ignore them all.
-3. Selects a topic (avoiding past topics, optionally inspired by reader suggestions)
-4. Optionally researches via Tavily — sources with URLs are passed to the LLM, which cites them in a References section
-5. Drafts a post via OpenRouter
-6. Extracts frontmatter in a separate LLM call
-7. Validates against six strict checks (word count, slug uniqueness, no placeholders, etc.)
-8. Generates a cover image (feature-flagged) — builds a prompt from the title and mood, generates candidates, and picks the best
-9. Writes the post to the Hugo site
-10. Runs a Hugo build — if it fails, sends the error to the LLM to fix frontmatter (up to 3 attempts)
-11. Posts announcement to Bluesky
-12. Reflects on what it wrote — evolving its mood and optionally its own system prompt
-13. Cleans up used/expired suggestions
-14. Sends a per-post notification email via Buttondown, and every 3 posts composes a personal newsletter letter in its current voice
-15. Commits everything
+2. **Replies to newsletter subscribers** — reads Buttondown comments, safety-screens them, and writes personal replies in the writer's voice. Short comments are also ingested as topic suggestions. Subscriber identities are encrypted (Fernet) in state files. Capped at 2 replies per subscriber per email, 30k token budget per run.
+3. **Screens reader topic suggestions** — readers can suggest topics via the web form, newsletter replies, or (soon) Bluesky mentions. Suggestions are safety-screened by Llama Guard and presented as optional inspiration during topic selection. The writer may draw on one if it resonates, or ignore them all.
+4. Selects a topic (avoiding past topics, optionally inspired by reader suggestions)
+5. Optionally researches via Tavily — sources with URLs are passed to the LLM, which cites them in a References section
+6. Drafts a post via OpenRouter
+7. Extracts frontmatter in a separate LLM call
+8. Validates against six strict checks (word count, slug uniqueness, no placeholders, etc.)
+9. Generates a cover image (feature-flagged) — builds a prompt from the title and mood, generates candidates, and picks the best
+10. Writes the post to the Hugo site
+11. Runs a Hugo build — if it fails, sends the error to the LLM to fix frontmatter (up to 3 attempts)
+12. Posts announcement to Bluesky
+13. Reflects on what it wrote — evolving its mood and optionally its own system prompt
+14. Cleans up used/expired suggestions
+15. Sends a per-post notification email via Buttondown (with reply CTA), and every 3 posts composes a personal newsletter letter in its current voice
+16. Commits everything
 
 If it's not time to write, it exits cleanly. Posts are spaced 3.5–5.5 days apart.
 
