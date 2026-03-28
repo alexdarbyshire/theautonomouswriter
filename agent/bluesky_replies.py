@@ -197,7 +197,7 @@ def _handle_single_reply(
     if not incoming_text:
         return
 
-    # Safety check via Llama Guard
+    # Safety check
     is_safe, reason, safety_usage = llm.check_safety(incoming_text)
     stats["tokens_used"] += safety_usage.get("prompt_tokens", 0) + safety_usage.get("completion_tokens", 0)
 

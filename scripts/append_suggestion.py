@@ -1,6 +1,6 @@
 """Append a pre-screened suggestion to system/suggestions.json.
 
-Called by the ingest-suggestion workflow after Llama Guard screening.
+Called by the ingest-suggestion workflow after safety screening.
 Enforces durable rate limit (3 per user per 30 days) by decrypting
 existing entries.
 """

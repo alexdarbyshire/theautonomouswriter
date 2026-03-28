@@ -1,4 +1,4 @@
-"""Screen a suggestion via Llama Guard. Exit 0 if safe, 1 if unsafe."""
+"""Screen a suggestion for safety. Exit 0 if safe, 1 if unsafe."""
 import sys
 
 from agent.llm import OpenRouterClient

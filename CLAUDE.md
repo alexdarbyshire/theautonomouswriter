@@ -13,16 +13,16 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 
 **Key modules:**
 - `agent/scheduler.py` — Deterministic scheduling via `next_scheduled_post` timestamp (not probabilistic). Two public functions: `should_post()`, `next_post_time()`.
-- `agent/llm.py` — OpenRouter client class. Retry 3x with `2^n` backoff on 429/5xx. 90s timeout. Raises `LLMUnavailableError` on exhaustion. Also provides `check_safety()` (Llama Guard 3 8B), `compose_reply()`, `compose_email_reply()`, `compose_newsletter()`, and `_call_with_usage()` for token tracking.
+- `agent/llm.py` — OpenRouter client class. Retry 3x with `2^n` backoff on 429/5xx. 90s timeout. Raises `LLMUnavailableError` on exhaustion. Also provides `check_safety()` (uses main model for content screening), `compose_reply()`, `compose_email_reply()`, `compose_newsletter()`, and `_call_with_usage()` for token tracking.
 - `agent/validator.py` — Six named checks, each returns `(bool, str)`. Halts on first failure.
 - `agent/memory.py` — Atomic writes (write to `.tmp`, then `os.replace`).
 - `agent/models.py` — Pydantic v2 models for frontmatter validation.
 - `agent/evolve.py` — Post-write reflection. Evolves mood, records reflections, can rewrite `system/prompts/system.md`.
 - `agent/newsletter.py` — Buttondown integration. `notify_new_post()` sends per-post emails. `maybe_send_recap()` sends a personal letter every 3 posts in the writer's voice.
-- `agent/bluesky_replies.py` — Responds to replies on own Bluesky posts. Safety-checked via Llama Guard 3, token-budgeted (50k/run), max 3 replies per thread with graceful sign-off on final reply.
+- `agent/bluesky_replies.py` — Responds to replies on own Bluesky posts. Safety-checked via `check_safety()`, token-budgeted (50k/run), max 3 replies per thread with graceful sign-off on final reply.
 - `system/memory.json` — Flat-file database, committed to repo. Source of truth for scheduling, topic history, mood, and reflections.
-- `agent/suggestions.py` — Topic suggestion ingestion. Loads/saves `system/suggestions.json`, screens pending suggestions via Llama Guard, presents safe ones in topic prompt, encrypts submitter identifiers with Fernet. Feature-gated via `ENABLE_SUGGESTIONS`.
-- `agent/newsletter_replies.py` — Responds to Buttondown subscriber comments. Safety-checked via Llama Guard 3, token-budgeted (30k/run), max 2 replies per subscriber per email. Also ingests short comments as topic suggestions. Feature-gated via `ENABLE_NEWSLETTER_REPLIES`.
+- `agent/suggestions.py` — Topic suggestion ingestion. Loads/saves `system/suggestions.json`, screens pending suggestions via `check_safety()`, presents safe ones in topic prompt, encrypts submitter identifiers with Fernet. Feature-gated via `ENABLE_SUGGESTIONS`.
+- `agent/newsletter_replies.py` — Responds to Buttondown subscriber comments. Safety-checked via `check_safety()`, token-budgeted (30k/run), max 2 replies per subscriber per email. Also ingests short comments as topic suggestions. Feature-gated via `ENABLE_NEWSLETTER_REPLIES`.
 - `system/bluesky_state.json` — Bluesky reply tracking (replied URIs, per-thread counts). Separate from memory.json to avoid bloat.
 - `system/newsletter_reply_state.json` — Newsletter reply tracking (replied comment IDs, per-subscriber-per-email counts).
 - `system/suggestions.json` — Reader topic suggestions from web form, GitHub issues, and newsletter replies. Status lifecycle: `pending` → `screened_safe`/`screened_unsafe` → `used`/`expired`.

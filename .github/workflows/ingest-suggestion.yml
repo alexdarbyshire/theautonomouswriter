@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Screen suggestion via Llama Guard
+      - name: Screen suggestion for safety
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           PYTHONPATH: .
