@@ -36,11 +36,13 @@ jobs:
       - name: Screen suggestion via Llama Guard
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PYTHONPATH: .
         run: uv run python scripts/screen_suggestion.py "${{ inputs.text }}"
 
       - name: Append to suggestions.json
         env:
           SUGGESTION_ENCRYPTION_KEY: ${{ secrets.SUGGESTION_ENCRYPTION_KEY }}
+          PYTHONPATH: .
         run: >
           uv run python scripts/append_suggestion.py
           "${{ inputs.source }}"
