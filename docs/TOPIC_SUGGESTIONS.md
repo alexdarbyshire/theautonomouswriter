@@ -439,33 +439,7 @@ Reuses existing `BUTTONDOWN_API_KEY` and `BUTTONDOWN_USERNAME`.
 
 ## Feature 3: Bluesky Mentions as Suggestions
 
-**Ships third. Extends existing Bluesky integration.**
-
-### 3.1 Mention Scanning
-
-Extend `agent/bluesky_replies.py` (or add to `agent/suggestions.py`):
-- Scan mentions (not just replies to own posts) for suggestion-like content
-- Differentiate: replies to posts are handled by existing reply bot; standalone mentions with suggestion-like phrasing become topic suggestions
-- Safety-screen via `llm.check_safety()`
-- Add to `suggestions.json` with `source: "bluesky"`, handle stored as-is (public)
-
-### 3.2 Heuristic for "Is This a Suggestion?"
-
-Not every mention is a topic suggestion. Use a simple heuristic:
-- Mention contains phrases like "write about", "topic suggestion", "you should explore", "I'd love to read about"
-- Or: run a lightweight LLM classification call (adds token cost)
-- Fallback: treat all mentions as potential suggestions and let the writer decide (simplest, most in character)
-
-### 3.3 Rate Limit
-
-2 suggestions per Bluesky handle per 30 days. Handle stored directly (public identifier).
-
-### 3.4 Tests
-
-- Mention detection and filtering
-- Suggestion extraction from mention text
-- Rate limiting by handle
-- Integration with existing reply bot (no double-processing)
+**Status: Shelved.** Bluesky mentions are the most abuse-prone ingestion channel — anyone can @mention from throwaway accounts, there's no auth friction (unlike Google OIDC for the web form or being a newsletter subscriber), and handle-based rate limits are trivially bypassed. The token cost of safety-screening a flood of junk mentions isn't worth it when engaged readers already have the web form and newsletter replies. May revisit if Bluesky adds account-age or follower-count signals to the API that would allow meaningful filtering.
 
 ---
 
@@ -507,38 +481,28 @@ Not every mention is a topic suggestion. Use a simple heuristic:
 | Modify | `.github/workflows/autonomous-loop.yml` — git add newsletter state |
 | Modify | `CLAUDE.md` — docs |
 
-### Feature 3 (Bluesky Mentions)
-
-| Action | File |
-|--------|------|
-| Modify | `agent/bluesky_replies.py` or `agent/suggestions.py` — mention scanning |
-| Modify | `agent/main.py` — Bluesky suggestion ingestion |
-| Create | `tests/test_bluesky_suggestions.py` |
-| Modify | `CLAUDE.md` — docs |
+### ~~Feature 3 (Bluesky Mentions)~~ — Shelved
 
 ---
 
 ## Verification Checklist
 
 ### Feature 1
-- [ ] `uv run pytest tests/test_suggestions.py` passes
-- [ ] `uv run pytest tests/` — no regressions
-- [ ] `cd site && hugo` builds without errors, `/suggest/` page renders
-- [ ] Local agent run with `FORCE_POST=true ENABLE_SUGGESTIONS=true` — suggestions appear in topic prompt
-- [ ] Deploy: `POST /api/suggest` with auth returns 200
-- [ ] Deploy: `POST /api/suggest` without auth returns 401/redirect
-- [ ] Workflow dispatch fires and commits suggestion to `suggestions.json`
-- [ ] Llama Guard blocks unsafe suggestion in ingest workflow (no commit)
-- [ ] Rate limit blocks excessive submissions from same user
+- [x] `uv run pytest tests/test_suggestions.py` passes
+- [x] `uv run pytest tests/` — no regressions
+- [x] `cd site && hugo` builds without errors, `/suggest/` page renders
+- [x] Local agent run with `FORCE_POST=true ENABLE_SUGGESTIONS=true` — suggestions appear in topic prompt
+- [x] Deploy: `POST /api/suggest` with auth returns 200
+- [x] Deploy: `POST /api/suggest` without auth returns 401/redirect
+- [x] Workflow dispatch fires and commits suggestion to `suggestions.json`
+- [x] Llama Guard blocks unsafe suggestion in ingest workflow (no commit)
+- [x] Rate limit blocks excessive submissions from same user
 
 ### Feature 2
-- [ ] `uv run pytest tests/test_newsletter_replies.py` passes
-- [ ] Newsletter emails include suggestion CTA
-- [ ] Writer replies to subscriber emails (capped, safety-checked)
-- [ ] Subscriber replies parsed for topic suggestions
-- [ ] No PII (email addresses) in committed state files
+- [x] `uv run pytest tests/test_newsletter_replies.py` passes
+- [x] Newsletter emails include suggestion CTA
+- [x] Writer replies to subscriber emails (capped, safety-checked)
+- [x] Subscriber replies parsed for topic suggestions
+- [x] No PII (email addresses) in committed state files
 
-### Feature 3
-- [ ] Bluesky mentions detected and parsed for suggestions
-- [ ] No double-processing between reply bot and suggestion ingestion
-- [ ] Rate limit enforced per handle
+### ~~Feature 3~~ — Shelved
