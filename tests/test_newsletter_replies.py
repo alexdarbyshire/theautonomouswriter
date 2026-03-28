@@ -1,6 +1,4 @@
-import json
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from cryptography.fernet import Fernet
@@ -25,7 +23,7 @@ def _make_comment(id="c1", subscriber_id="sub-1", email_id="email-1", body="Grea
         "email_id": email_id,
         "body": body,
         "parent_id": parent_id,
-        "creation_date": datetime.now(timezone.utc).isoformat(),
+        "creation_date": datetime.now(UTC).isoformat(),
     }
 
 
@@ -61,8 +59,16 @@ def test_safety_check_blocks_unsafe():
     reply_counts = {}
 
     _handle_single_comment(
-        "fake-key", llm, comment, "curious", "writer identity",
-        reply_counts, replied_ids, replied_set, stats, ENC_KEY,
+        "fake-key",
+        llm,
+        comment,
+        "curious",
+        "writer identity",
+        reply_counts,
+        replied_ids,
+        replied_set,
+        stats,
+        ENC_KEY,
     )
 
     assert stats["skipped_unsafe"] == 1
@@ -83,8 +89,16 @@ def test_successful_reply(mock_send):
     reply_counts = {}
 
     _handle_single_comment(
-        "fake-key", llm, comment, "curious", "writer identity",
-        reply_counts, replied_ids, replied_set, stats, ENC_KEY,
+        "fake-key",
+        llm,
+        comment,
+        "curious",
+        "writer identity",
+        reply_counts,
+        replied_ids,
+        replied_set,
+        stats,
+        ENC_KEY,
     )
 
     assert stats["replies_sent"] == 1
@@ -106,12 +120,21 @@ def test_per_subscriber_rate_limit():
     replied_set = set()
     # Pre-populate with encrypted subscriber ID at limit
     from agent.newsletter_replies import _encrypt_subscriber_id
+
     encrypted_sub = _encrypt_subscriber_id("sub-1", ENC_KEY)
     reply_counts = {f"email-1:{encrypted_sub}": 2}  # already at limit
 
     _handle_single_comment(
-        "fake-key", llm, comment, "curious", "writer identity",
-        reply_counts, replied_ids, replied_set, stats, ENC_KEY,
+        "fake-key",
+        llm,
+        comment,
+        "curious",
+        "writer identity",
+        reply_counts,
+        replied_ids,
+        replied_set,
+        stats,
+        ENC_KEY,
     )
 
     assert stats["replies_sent"] == 0
@@ -129,12 +152,21 @@ def test_final_reply_signals_closing(mock_send):
     stats = {"replies_sent": 0, "tokens_used": 0, "skipped_unsafe": 0}
     # Pre-populate with encrypted subscriber ID one away from limit
     from agent.newsletter_replies import _encrypt_subscriber_id
+
     encrypted_sub = _encrypt_subscriber_id("sub-1", ENC_KEY)
     reply_counts = {f"email-1:{encrypted_sub}": 1}  # one away from limit
 
     _handle_single_comment(
-        "fake-key", llm, comment, "curious", "writer identity",
-        reply_counts, [], set(), stats, ENC_KEY,
+        "fake-key",
+        llm,
+        comment,
+        "curious",
+        "writer identity",
+        reply_counts,
+        [],
+        set(),
+        stats,
+        ENC_KEY,
     )
 
     # Should have passed is_final=True
@@ -245,6 +277,7 @@ def test_find_count_key_creates_encrypted_key():
 
 def test_find_count_key_matches_existing_encrypted():
     from agent.newsletter_replies import _encrypt_subscriber_id
+
     encrypted_sub = _encrypt_subscriber_id("sub-1", ENC_KEY)
     existing_counts = {f"email-1:{encrypted_sub}": 3}
 

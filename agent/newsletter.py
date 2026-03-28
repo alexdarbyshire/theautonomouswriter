@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
-import urllib.request
 import urllib.error
+import urllib.request
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from agent.llm import OpenRouterClient
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +34,13 @@ def _get_api_config() -> tuple[str, str] | None:
 
 def _send_email(api_key: str, subject: str, body: str) -> None:
     """Send an email via Buttondown API. Raises on failure."""
-    payload = json.dumps({
-        "subject": subject,
-        "body": body,
-        "status": "about_to_send",
-    }).encode()
+    payload = json.dumps(
+        {
+            "subject": subject,
+            "body": body,
+            "status": "about_to_send",
+        }
+    ).encode()
     req = urllib.request.Request(
         BUTTONDOWN_API,
         data=payload,
@@ -45,9 +53,7 @@ def _send_email(api_key: str, subject: str, body: str) -> None:
     )
     with urllib.request.urlopen(req, timeout=30) as resp:
         if resp.status >= 300:
-            raise urllib.error.HTTPError(
-                BUTTONDOWN_API, resp.status, resp.read().decode(), resp.headers, None
-            )
+            raise urllib.error.HTTPError(BUTTONDOWN_API, resp.status, resp.read().decode(), resp.headers, None)
     logger.info("Buttondown email sent: %s", subject)
 
 
@@ -112,7 +118,7 @@ def _get_recent_posts(n: int) -> list[dict]:
     return posts
 
 
-def maybe_send_recap(memory: dict, llm, system_prompt: str) -> bool:
+def maybe_send_recap(memory: dict, llm: OpenRouterClient, system_prompt: str) -> bool:
     """Send a recap newsletter if enough posts have accumulated. Non-critical."""
     config = _get_api_config()
     if not config:
@@ -136,16 +142,16 @@ def maybe_send_recap(memory: dict, llm, system_prompt: str) -> bool:
             return False
 
         mood = memory.get("current_persona_mood", "curious")
-        post_list = "\n".join(
-            f"- [{p['title']}]({p['url']}): {p.get('description', '')}"
-            for p in recent
-        )
+        post_list = "\n".join(f"- [{p['title']}]({p['url']}): {p.get('description', '')}" for p in recent)
         # Pass recent reflections so the writer can draw on its inner thoughts
         all_reflections = memory.get("past_reflections", [])
         recent_reflections = all_reflections[-RECAP_EVERY_N_POSTS:] if all_reflections else None
 
         newsletter_json = llm.compose_newsletter(
-            system_prompt, post_list, mood, recent_reflections,
+            system_prompt,
+            post_list,
+            mood,
+            recent_reflections,
         )
         # Parse JSON response
         newsletter_json = newsletter_json.strip()

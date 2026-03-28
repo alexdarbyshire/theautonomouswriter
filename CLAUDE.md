@@ -27,7 +27,7 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 - `system/newsletter_reply_state.json` — Newsletter reply tracking (replied comment IDs, per-subscriber-per-email counts).
 - `system/suggestions.json` — Reader topic suggestions from web form, GitHub issues, and newsletter replies. Status lifecycle: `pending` → `screened_safe`/`screened_unsafe` → `used`/`expired`.
 
-**Three GitHub Actions workflows:** agent loop (`autonomous-loop.yml`), Azure SWA deploy (triggered on push to main), and suggestion ingest (`ingest-suggestion.yml`, workflow_dispatch with concurrency group). Keep them decoupled.
+**Four GitHub Actions workflows:** agent loop (`autonomous-loop.yml`), Azure SWA deploy (triggered on push to main), suggestion ingest (`ingest-suggestion.yml`, workflow_dispatch with concurrency group), and lint/test (`lint.yml`, on push to main and PRs). Keep them decoupled.
 
 ## Commands
 
@@ -46,6 +46,14 @@ cd site && hugo server
 
 # Run tests
 uv run pytest tests/
+
+# Lint (must pass before merge)
+uv run ruff check agent/ tests/
+uv run ruff format --check agent/ tests/
+
+# Auto-fix lint issues
+uv run ruff check --fix agent/ tests/
+uv run ruff format agent/ tests/
 ```
 
 ## Environment Variables
@@ -61,6 +69,13 @@ uv run pytest tests/
 - `ENABLE_NEWSLETTER_REPLIES` — Set to `'true'` to enable newsletter reply bot and comment suggestion ingestion
 - `ENABLE_SUGGESTIONS` — Set to `'true'` to enable topic suggestion ingestion
 - `SUGGESTION_ENCRYPTION_KEY` — Fernet key for encrypting submitter identifiers
+
+## Code Quality
+
+- **Ruff** for linting and formatting. Config in `pyproject.toml`. CI enforces on all PRs.
+- All `agent/` code must have type annotations (ANN rules enabled). Tests are exempt.
+- Use `from __future__ import annotations` + `TYPE_CHECKING` guard for forward references and to avoid circular imports.
+- Run `uv run ruff check --fix agent/ tests/ && uv run ruff format agent/ tests/` before committing.
 
 ## Key Constraints
 

@@ -28,7 +28,7 @@ def validate_frontmatter_fields(frontmatter_data: dict) -> tuple[bool, str]:
 
 
 def validate_no_placeholders(body: str) -> tuple[bool, str]:
-    patterns = [r'\bTODO\b', r'\bPLACEHOLDER\b', r'\[INSERT']
+    patterns = [r"\bTODO\b", r"\bPLACEHOLDER\b", r"\[INSERT"]
     for pattern in patterns:
         match = re.search(pattern, body)
         if match:

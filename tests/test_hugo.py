@@ -1,6 +1,5 @@
 import json
 import subprocess
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -51,20 +50,24 @@ class TestRebuildPost:
         assert "Body\n" in result
 
 
+def _valid_fm(**overrides):
+    fm = {"title": "OK", "date": "2026-03-15", "slug": "ok", "description": "d", "tags": ["a"], "draft": False}
+    fm.update(overrides)
+    return fm
+
+
 class TestValidateAndFix:
     def test_passes_on_first_try(self, post_path, site_dir, mock_llm):
-        _make_post(post_path, {"title": "OK", "date": "2026-03-15", "slug": "ok", "description": "d", "tags": ["a"], "draft": False})
+        _make_post(post_path, _valid_fm())
         with patch("agent.hugo.subprocess.run") as mock_run:
-            mock_run.return_value = subprocess.CompletedProcess(
-                args=[], returncode=0, stdout="", stderr=""
-            )
+            mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
             assert validate_and_fix(post_path, site_dir, mock_llm)
             assert mock_run.call_count == 1
             mock_llm.fix_frontmatter.assert_not_called()
 
     def test_fixes_and_retries(self, post_path, site_dir, mock_llm):
-        _make_post(post_path, {"title": "Broken", "date": "2026-03-15", "slug": "broken", "description": "d", "tags": ["a"], "draft": False})
-        fixed = {"title": "Fixed", "date": "2026-03-15", "slug": "broken", "description": "d", "tags": ["a"], "draft": False}
+        _make_post(post_path, _valid_fm(title="Broken", slug="broken"))
+        fixed = _valid_fm(title="Fixed", slug="broken")
         mock_llm.fix_frontmatter.return_value = json.dumps(fixed)
 
         fail = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="YAML error")
@@ -74,8 +77,8 @@ class TestValidateAndFix:
             mock_llm.fix_frontmatter.assert_called_once()
 
     def test_exhausts_retries(self, post_path, site_dir, mock_llm):
-        _make_post(post_path, {"title": "OK", "date": "2026-03-15", "slug": "ok", "description": "d", "tags": ["a"], "draft": False})
-        fixed = {"title": "Still Broken", "date": "2026-03-15", "slug": "ok", "description": "d", "tags": ["a"], "draft": False}
+        _make_post(post_path, _valid_fm())
+        fixed = _valid_fm(title="Still Broken")
         mock_llm.fix_frontmatter.return_value = json.dumps(fixed)
 
         fail = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="persistent error")
@@ -91,7 +94,7 @@ class TestValidateAndFix:
             mock_llm.fix_frontmatter.assert_not_called()
 
     def test_llm_fix_failure_returns_false(self, post_path, site_dir, mock_llm):
-        _make_post(post_path, {"title": "OK", "date": "2026-03-15", "slug": "ok", "description": "d", "tags": ["a"], "draft": False})
+        _make_post(post_path, _valid_fm())
         mock_llm.fix_frontmatter.return_value = "not valid json"
 
         fail = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="YAML error")

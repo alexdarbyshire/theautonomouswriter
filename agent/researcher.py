@@ -16,15 +16,18 @@ def research_topic(topic: str) -> list[dict] | None:
 
     try:
         from tavily import TavilyClient
+
         client = TavilyClient(api_key=api_key)
         result = client.search(query=topic, max_results=5)
         sources = []
         for item in result.get("results", []):
-            sources.append({
-                "title": item.get("title", ""),
-                "url": item.get("url", ""),
-                "content": item.get("content", ""),
-            })
+            sources.append(
+                {
+                    "title": item.get("title", ""),
+                    "url": item.get("url", ""),
+                    "content": item.get("content", ""),
+                }
+            )
         logger.info("Research complete: %d results for '%s'", len(sources), topic)
         return sources if sources else None
     except Exception as e:

@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 import logging
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from agent.llm import OpenRouterClient
 
 logger = logging.getLogger(__name__)
 
@@ -7,7 +13,13 @@ BASE_URL = "https://theautonomouswriter.com/posts/"
 GRAPHEME_LIMIT = 300
 
 
-def post_to_bluesky(title: str, description: str, slug: str, llm=None, mood: str = "") -> bool:
+def post_to_bluesky(
+    title: str,
+    description: str,
+    slug: str,
+    llm: OpenRouterClient | None = None,
+    mood: str = "",
+) -> bool:
     if os.environ.get("ENABLE_BLUESKY", "").lower() != "true":
         logger.info("Bluesky disabled (ENABLE_BLUESKY not set to 'true')")
         return False
@@ -36,7 +48,12 @@ def post_to_bluesky(title: str, description: str, slug: str, llm=None, mood: str
         return False
 
 
-def _generate_announcement(title: str, description: str, mood: str, llm) -> str:
+def _generate_announcement(
+    title: str,
+    description: str,
+    mood: str,
+    llm: OpenRouterClient | None,
+) -> str:
     if llm:
         try:
             text = llm.compose_bluesky_post(title, description, mood)

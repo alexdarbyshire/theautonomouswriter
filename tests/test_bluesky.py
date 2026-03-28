@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from agent.bluesky import _truncate_announcement, _generate_announcement, post_to_bluesky
+from agent.bluesky import _generate_announcement, _truncate_announcement, post_to_bluesky
 
 
 def test_disabled_when_flag_off(monkeypatch):
@@ -37,13 +37,22 @@ def test_successful_post(monkeypatch):
 
     with patch.dict("sys.modules", {"atproto": mock_atproto}):
         import importlib
+
         import agent.bluesky
+
         importlib.reload(agent.bluesky)
 
         mock_llm = MagicMock()
         mock_llm.compose_bluesky_post.return_value = "Just wrote something new."
 
-        assert agent.bluesky.post_to_bluesky("My Title", "A description", "my-slug", llm=mock_llm, mood="curious") is True
+        result = agent.bluesky.post_to_bluesky(
+            "My Title",
+            "A description",
+            "my-slug",
+            llm=mock_llm,
+            mood="curious",
+        )
+        assert result is True
 
     mock_client.login.assert_called_once_with("test.bsky.social", "test-pass")
     mock_client.send_post.assert_called_once_with(mock_text_builder)
@@ -63,7 +72,9 @@ def test_graceful_failure_on_api_error(monkeypatch):
 
     with patch.dict("sys.modules", {"atproto": MagicMock(Client=MagicMock(return_value=mock_client))}):
         import importlib
+
         import agent.bluesky
+
         importlib.reload(agent.bluesky)
         assert agent.bluesky.post_to_bluesky("Title", "Desc", "slug") is False
 
