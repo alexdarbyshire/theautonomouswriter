@@ -21,7 +21,7 @@ from agent.suggestions import (
     get_safe_suggestions,
     load_suggestions,
     mark_used,
-    parse_topic_for_suggestion_id,
+    match_suggestion,
     save_suggestions,
     screen_pending,
 )
@@ -93,10 +93,10 @@ def main() -> None:
             logger.warning("Suggestion processing failed (non-critical): %s", e)
 
     topic_prompt = (
-        f"You are a blog topic selector. Your current mood is: {mood}\n\n"
-        f"Previously written topics (do NOT repeat these):\n"
-        + ("\n".join(f"- {t}" for t in past_topics) if past_topics else "- (none yet, this is the first post)")
-        + "\n\nSuggest ONE new blog topic. Reply with ONLY the topic as a short phrase, nothing else."
+        f"Your current mood is: {mood}\n\n"
+        f"Topics you've already written about (do NOT repeat these):\n"
+        + ("\n".join(f"- {t}" for t in past_topics) if past_topics else "- (none yet, this is your first post)")
+        + "\n\nWhat do you want to write about next? Reply with ONLY the topic as a short phrase, nothing else."
         + suggestions_context
     )
 
@@ -107,10 +107,13 @@ def main() -> None:
         logger.error("Failed to select topic: %s", e)
         sys.exit(1)
 
-    # 5b. Check if a reader suggestion was used
-    suggestion_id, topic = parse_topic_for_suggestion_id(topic)
+    # 5b. Check if a reader suggestion inspired the topic (semantic match)
+    safe_suggestions = get_safe_suggestions(suggestions_data) if suggestions_data else []
+    suggestion_id = match_suggestion(topic, safe_suggestions)
+    reader_inspired = False
     if suggestion_id and suggestions_data:
         mark_used(suggestions_data, suggestion_id, "")  # slug filled in after frontmatter
+        reader_inspired = True
         logger.info("Topic inspired by suggestion: %s", suggestion_id)
 
     # 3. Research (now that we have a topic)
@@ -118,6 +121,12 @@ def main() -> None:
 
     # 5. Draft article
     draft_prompt = f"Write a blog post about: {topic}\n\n"
+    if reader_inspired:
+        draft_prompt += (
+            "This topic was sparked by a reader suggestion. If it feels natural, "
+            "you might acknowledge that a reader put this idea in your head \u2014 "
+            "but only if it serves the piece. Don't force it.\n\n"
+        )
     if research_context:
         draft_prompt += "Here is some current research context to inform your writing (use these sources where relevant):\n"
         for i, src in enumerate(research_context, 1):

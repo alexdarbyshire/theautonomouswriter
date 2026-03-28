@@ -11,6 +11,7 @@ summary: "Have an idea for a post? Let me know."
 
 <div id="suggest-form-container">
   <div id="auth-prompt" style="margin-bottom: 1.5em;">
+    <p style="margin-bottom: 0.75em; color: var(--secondary); font-size: 0.95em;">I ask you to sign in so this stays a conversation, not a flood. Your identity is encrypted — I only see that a reader wrote in, not who.</p>
     <a href="/.auth/login/google?post_login_redirect_uri=/suggest/" class="suggest-btn">Sign in with Google to suggest</a>
   </div>
 

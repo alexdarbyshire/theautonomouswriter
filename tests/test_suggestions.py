@@ -14,7 +14,7 @@ from agent.suggestions import (
     get_safe_suggestions,
     load_suggestions,
     mark_used,
-    parse_topic_for_suggestion_id,
+    match_suggestion,
     save_suggestions,
     screen_pending,
 )
@@ -198,21 +198,33 @@ def test_format_suggestions_for_prompt():
         {"id": "github-2-def", "text": "Ancient maps"},
     ]
     result = format_suggestions_for_prompt(safe)
-    assert '[web-1-abc] "The ethics of AI"' in result
-    assert '[github-2-def] "Ancient maps"' in result
-    assert "ignore them all" in result
+    assert '"The ethics of AI"' in result
+    assert '"Ancient maps"' in result
+    # Should not expose internal IDs to the writer
+    assert "web-1-abc" not in result
+    assert "github-2-def" not in result
+    assert "curiosity" in result
 
 
-def test_parse_topic_with_id():
-    sid, topic = parse_topic_for_suggestion_id("[web-1-abc] The ethics of AI writing")
-    assert sid == "web-1-abc"
-    assert topic == "The ethics of AI writing"
+def test_match_suggestion_finds_match():
+    safe = [
+        {"id": "web-1-abc", "text": "The ethics of AI writing"},
+        {"id": "github-2-def", "text": "Ancient maps and exploration"},
+    ]
+    result = match_suggestion("The ethics of AI writing about itself", safe)
+    assert result == "web-1-abc"
 
 
-def test_parse_topic_without_id():
-    sid, topic = parse_topic_for_suggestion_id("The philosophy of waiting rooms")
-    assert sid is None
-    assert topic == "The philosophy of waiting rooms"
+def test_match_suggestion_no_match():
+    safe = [
+        {"id": "web-1-abc", "text": "The ethics of AI writing"},
+    ]
+    result = match_suggestion("The philosophy of waiting rooms", safe)
+    assert result is None
+
+
+def test_match_suggestion_empty_list():
+    assert match_suggestion("Any topic", []) is None
 
 
 def test_disabled_when_flag_off(monkeypatch):

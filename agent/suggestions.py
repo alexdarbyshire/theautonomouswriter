@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -142,24 +141,33 @@ def cleanup(suggestions: dict) -> None:
 
 def format_suggestions_for_prompt(safe: list) -> str:
     lines = [
-        "Your readers have left some suggestions. You may draw inspiration from",
-        "one if it genuinely resonates with your mood \u2014 or ignore them all.",
-        "If you use a suggestion, begin your reply with [ID] then the topic.",
+        "Some of your readers have shared ideas they'd love to see you explore.",
+        "Read through them \u2014 if one sparks something, let it pull you in.",
+        "If nothing resonates, follow your own curiosity as always.",
         "",
     ]
     for s in safe:
-        lines.append(f'- [{s["id"]}] "{s["text"]}"')
-    lines.append("")
-    lines.append("Or suggest your own original topic as usual.")
+        lines.append(f'- "{s["text"]}"')
     return "\n".join(lines)
 
 
-def parse_topic_for_suggestion_id(topic: str) -> tuple[str | None, str]:
-    """Parse a topic string for a [suggestion-id] prefix.
+def match_suggestion(topic: str, safe: list, threshold: float = 0.5) -> str | None:
+    """Find the best-matching suggestion for a chosen topic by word overlap.
 
-    Returns (suggestion_id, clean_topic). suggestion_id is None if not found.
+    Returns the suggestion ID if a match is found, None otherwise.
     """
-    match = re.match(r"^\[([^\]]+)\]\s*(.+)$", topic.strip())
-    if match:
-        return match.group(1), match.group(2).strip()
-    return None, topic.strip()
+    if not safe:
+        return None
+    topic_words = set(topic.lower().split())
+    best_id = None
+    best_score = 0.0
+    for s in safe:
+        suggestion_words = set(s["text"].lower().split())
+        if not suggestion_words:
+            continue
+        overlap = len(topic_words & suggestion_words)
+        score = overlap / len(suggestion_words)
+        if score > best_score:
+            best_score = score
+            best_id = s["id"]
+    return best_id if best_score >= threshold else None
