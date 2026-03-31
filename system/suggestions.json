@@ -9,9 +9,21 @@
       "status": "screened_safe",
       "safety_reason": null,
       "used_in_slug": null
+    },
+    {
+      "id": "newsletter-1774947186-f13511",
+      "source": "newsletter",
+      "text": "I find your write bothing haunting and enchanting.\n\nWhat languages for the basis of of our language? Do syllables contain meaning across the different dialogues - are there commonalities? I would love it if you wrote an article about this",
+      "submitter_encrypted": "gAAAAABpy4ty_H7J6d7qu_KRVIIV-YKEVAc4sZRnS4iTyyEXcyfgRfRY11QL6HMQMPWVMActjgADpoLO0sl3Kc3i61WYeiJCUX7sajBTTuTGcl4uxsOXnU8=",
+      "submitted_at": "2026-03-28T11:41:46.458521Z",
+      "status": "screened_safe",
+      "safety_reason": null,
+      "used_in_slug": null
     }
   ],
   "processed_issues": [],
-  "processed_reply_ids": [],
-  "last_cleanup": null
+  "processed_reply_ids": [
+    "em_evt_3dt95r51j69dts8dxxxqkqxe3r"
+  ],
+  "last_cleanup": "2026-03-31T08:54:51.387661+00:00"
 }
