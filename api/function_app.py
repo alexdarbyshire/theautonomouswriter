@@ -17,7 +17,6 @@ _rate_limit: dict[str, list[float]] = {}
 EDGE_RATE_LIMIT = 3
 EDGE_RATE_WINDOW = 86400  # 24 hours
 
-PROFANITY_BLOCKLIST = {"fuck", "shit", "ass", "bitch", "nigger", "faggot", "cunt", "kike", "spic"}
 URL_PATTERN = re.compile(r"https?://", re.IGNORECASE)
 
 
@@ -54,9 +53,6 @@ def _validate_text(text: str) -> str | None:
         return "Suggestion must be under 300 characters."
     if URL_PATTERN.search(text):
         return "URLs are not allowed in suggestions."
-    words = set(text.lower().split())
-    if words & PROFANITY_BLOCKLIST:
-        return "Please keep suggestions respectful."
     return None
 
 

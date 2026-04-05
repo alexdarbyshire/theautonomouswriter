@@ -13,7 +13,7 @@ Autonomous AI blogging agent. Runs on a GitHub Actions cron schedule, uses an LL
 
 **Key modules:**
 - `agent/scheduler.py` — Deterministic scheduling via `next_scheduled_post` timestamp (not probabilistic). Two public functions: `should_post()`, `next_post_time()`.
-- `agent/llm.py` — OpenRouter client class. Retry 3x with `2^n` backoff on 429/5xx. 90s timeout. Raises `LLMUnavailableError` on exhaustion. Also provides `check_safety()` (uses main model for content screening), `compose_reply()`, `compose_email_reply()`, `compose_newsletter()`, and `_call_with_usage()` for token tracking.
+- `agent/llm.py` — OpenRouter client class. Retry 3x with `2^n` backoff on 429/5xx. 90s timeout. Raises `LLMUnavailableError` on exhaustion. Also provides `check_safety()` (two-stage: Llama Guard 4 first as cheap pre-screen, then main model for nuanced checks), `compose_reply()`, `compose_email_reply()`, `compose_newsletter()`, and `_call_with_usage()` for token tracking.
 - `agent/validator.py` — Six named checks, each returns `(bool, str)`. Halts on first failure.
 - `agent/memory.py` — Atomic writes (write to `.tmp`, then `os.replace`).
 - `agent/models.py` — Pydantic v2 models for frontmatter validation.

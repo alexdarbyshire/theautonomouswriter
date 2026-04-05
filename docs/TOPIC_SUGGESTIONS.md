@@ -43,9 +43,9 @@ Three ingestion channels for topic suggestions, all funneling into `system/sugge
 
 | Channel | Stage 1 (edge) | Stage 2 (before commit) | Stage 3 (agent runtime) |
 |---------|----------------|-------------------------|-------------------------|
-| Web form | Azure Function: length, no URLs, blocklist | `ingest-suggestion.yml`: Llama Guard via `check_safety()` | Agent: re-verify status before injecting into prompt |
-| GitHub Issues | GitHub account required (anti-spam) | N/A (stays on GitHub until agent reads) | Agent: Llama Guard screen before writing to `suggestions.json` |
-| Newsletter | Buttondown subscriber account required | N/A (stays in Buttondown until agent reads) | Agent: Llama Guard screen before writing to `suggestions.json` |
+| Web form | Azure Function: length, no URLs | `ingest-suggestion.yml`: Llama Guard + main model via `check_safety()` | Agent: re-verify status before injecting into prompt |
+| GitHub Issues | GitHub account required (anti-spam) | N/A (stays on GitHub until agent reads) | Agent: Llama Guard + main model screen before writing to `suggestions.json` |
+| Newsletter | Buttondown subscriber account required | N/A (stays in Buttondown until agent reads) | Agent: Llama Guard + main model screen before writing to `suggestions.json` |
 
 ### Rate Limiting & Identity Encryption
 
@@ -159,7 +159,7 @@ At end of run: `cleanup()` + `save_suggestions()`.
 Python v2 programming model. Single endpoint `POST /api/suggest`:
 
 1. **Auth check** — Azure SWA injects `x-ms-client-principal` header for authenticated users. Decode base64 JSON to get `userId`.
-2. **Validate** — `suggestion` field, 10-300 chars, no URLs (`https?://`), basic profanity blocklist.
+2. **Validate** — `suggestion` field, 10-300 chars, no URLs (`https?://`).
 3. **Rate limit** — In-memory dict by `userId`, 3 per 24 hours (resets on cold start). This is a coarse edge guard; the real per-user rate limit (3 per 30 days) is enforced by `submitter_encrypted` checks in the ingest workflow.
 4. **Dispatch** — Trigger `ingest-suggestion.yml` via GitHub API `workflow_dispatch` with inputs: `source`, `text`, `submitted_at`, `submitter_encrypted` (Fernet-encrypted userId).
 5. **Return** — `200 { "ok": true, "message": "..." }` or `400`/`429` with error.

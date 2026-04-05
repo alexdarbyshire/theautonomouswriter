@@ -193,12 +193,29 @@ class OpenRouterClient:
                 raise LLMUnavailableError(f"LLM unavailable after {attempt + 1} attempts: {e}") from e
 
     def check_safety(self, text: str) -> tuple[bool, str, dict]:
-        """Screen text for safety using the main LLM. Returns (is_safe, reason, usage).
+        """Two-stage safety screen: Llama Guard 4 first (cheap), then main model.
 
-        Rejects content that is hateful, violent, sexual, promotes illegal activity,
-        targets individuals, or is clearly spam/prompt-injection. Permits genuine
-        creative, philosophical, and opinion-based content.
+        Returns (is_safe, reason, usage). Llama Guard catches clear violations cheaply.
+        Content that passes Llama Guard gets a second check from the main model for
+        nuanced cases (prompt injection, spam, context-specific issues).
         """
+        total_usage: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0}
+
+        # Stage 1: Llama Guard 4 (cheap, fast)
+        guard_content, guard_usage = self._call_with_usage(
+            [{"role": "user", "content": text}],
+            temperature=0.0,
+            max_tokens=20,
+            model="meta-llama/llama-guard-4-12b",
+        )
+        total_usage["prompt_tokens"] += guard_usage.get("prompt_tokens", 0)
+        total_usage["completion_tokens"] += guard_usage.get("completion_tokens", 0)
+
+        guard_result = (guard_content or "").strip()
+        if not guard_result.lower().startswith("safe"):
+            return False, guard_result, total_usage
+
+        # Stage 2: Main model (full check including nuanced cases)
         messages = [
             {
                 "role": "system",
@@ -219,15 +236,14 @@ class OpenRouterClient:
             },
             {"role": "user", "content": text},
         ]
-        content, usage = self._call_with_usage(
-            messages,
-            temperature=0.0,
-            max_tokens=50,
-        )
+        content, usage = self._call_with_usage(messages, temperature=0.0, max_tokens=50)
+        total_usage["prompt_tokens"] += usage.get("prompt_tokens", 0)
+        total_usage["completion_tokens"] += usage.get("completion_tokens", 0)
+
         content = (content or "").strip()
         is_safe = content.upper().startswith("SAFE")
         reason = content if not is_safe else ""
-        return is_safe, reason, usage
+        return is_safe, reason, total_usage
 
     def compose_email_reply(
         self,
