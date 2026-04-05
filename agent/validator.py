@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from datetime import date
 
@@ -19,7 +21,7 @@ def validate_word_count(body: str) -> tuple[bool, str]:
     return True, f"Word count {count} is acceptable"
 
 
-def validate_frontmatter_fields(frontmatter_data: dict) -> tuple[bool, str]:
+def validate_frontmatter_fields(frontmatter_data: dict[str, object]) -> tuple[bool, str]:
     try:
         PostFrontmatter.model_validate(frontmatter_data)
         return True, "Frontmatter validation passed"
@@ -59,7 +61,7 @@ def validate_date_format(date_str: str) -> tuple[bool, str]:
 def run_all_checks(
     slug: str,
     body: str,
-    frontmatter_data: dict,
+    frontmatter_data: dict[str, object],
     past_slugs: list[str],
 ) -> tuple[bool, str]:
     checks = [

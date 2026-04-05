@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 import logging
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from agent.types import ResearchSource
 
 logger = logging.getLogger(__name__)
 
 
-def research_topic(topic: str) -> list[dict] | None:
+def research_topic(topic: str) -> list[ResearchSource] | None:
     if os.environ.get("ENABLE_RESEARCH", "").lower() != "true":
         logger.info("Research disabled (ENABLE_RESEARCH not set to 'true')")
         return None

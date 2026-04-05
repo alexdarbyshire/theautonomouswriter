@@ -4,12 +4,21 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import types
 
     from agent.llm import OpenRouterClient
+    from agent.types import (
+        BlueskyClient,
+        BlueskyNotification,
+        BlueskyPostRecord,
+        BlueskyState,
+        BlueskyStats,
+        BlueskyThread,
+        WriterMemory,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +30,7 @@ MAX_TRACKED_URIS = 200
 GRAPHEME_LIMIT = 300
 
 
-def _load_state() -> dict:
+def _load_state() -> BlueskyState:
     """Load Bluesky reply state from its own file."""
     if STATE_PATH.exists():
         try:
@@ -31,14 +40,14 @@ def _load_state() -> dict:
     return {"replied_uris": [], "thread_reply_counts": {}}
 
 
-def _save_state(state: dict) -> None:
+def _save_state(state: BlueskyState) -> None:
     """Atomic write of Bluesky reply state."""
     tmp = STATE_PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(state, indent=2))
     os.replace(tmp, STATE_PATH)
 
 
-def respond_to_mentions(llm: OpenRouterClient, memory: dict, mood: str) -> dict:
+def respond_to_mentions(llm: OpenRouterClient, memory: WriterMemory, mood: str) -> BlueskyStats:
     """Process Bluesky replies on own posts and respond where safe.
 
     Runs every cron invocation (independent of posting schedule).
@@ -85,15 +94,15 @@ def respond_to_mentions(llm: OpenRouterClient, memory: dict, mood: str) -> dict:
 
 
 def _process_notifications(
-    client: Any,
+    client: BlueskyClient,
     my_did: str,
     llm: OpenRouterClient,
-    state: dict,
+    state: BlueskyState,
     mood: str,
     writer_identity: str,
     atmodels: types.ModuleType,
-    stats: dict,
-) -> dict:
+    stats: BlueskyStats,
+) -> BlueskyStats:
     """Fetch and process reply notifications."""
     replied_uris = state["replied_uris"]
     thread_counts = state["thread_reply_counts"]
@@ -148,17 +157,17 @@ def _process_notifications(
 
 
 def _handle_single_reply(
-    client: Any,
+    client: BlueskyClient,
     my_did: str,
     llm: OpenRouterClient,
-    notification: Any,
+    notification: BlueskyNotification,
     mood: str,
     writer_identity: str,
     atmodels: types.ModuleType,
-    thread_counts: dict,
-    replied_uris: list,
-    replied_set: set,
-    stats: dict,
+    thread_counts: dict[str, int],
+    replied_uris: list[str],
+    replied_set: set[str],
+    stats: BlueskyStats,
 ) -> None:
     """Process a single reply notification."""
     # Get thread to check if it's rooted at our own post
@@ -255,7 +264,7 @@ def _handle_single_reply(
     thread_counts[root_uri] = thread_count + 1
 
 
-def _find_root_uri(thread: Any) -> str | None:
+def _find_root_uri(thread: BlueskyThread) -> str | None:
     """Walk up the thread to find the root post URI."""
     current = thread
     while hasattr(current, "parent") and current.parent and hasattr(current.parent, "post"):
@@ -265,7 +274,7 @@ def _find_root_uri(thread: Any) -> str | None:
     return None
 
 
-def _build_root_ref(thread: Any, atmodels: types.ModuleType) -> Any | None:
+def _build_root_ref(thread: BlueskyThread, atmodels: types.ModuleType) -> object | None:
     """Build a StrongRef for the root post of the thread."""
     current = thread
     while hasattr(current, "parent") and current.parent and hasattr(current.parent, "post"):
@@ -278,14 +287,14 @@ def _build_root_ref(thread: Any, atmodels: types.ModuleType) -> Any | None:
     return None
 
 
-def _extract_post_text(post: Any) -> str:
+def _extract_post_text(post: BlueskyPostRecord) -> str:
     """Extract text content from a post record."""
     if hasattr(post, "record") and hasattr(post.record, "text"):
         return post.record.text
     return ""
 
 
-def _build_thread_context(thread: Any, my_did: str) -> str:
+def _build_thread_context(thread: BlueskyThread, my_did: str) -> str:
     """Build a readable string of the thread conversation."""
     posts: list[tuple[str, str, str]] = []
     _collect_thread_posts(thread, posts)
@@ -298,7 +307,7 @@ def _build_thread_context(thread: Any, my_did: str) -> str:
     return "\n".join(lines) if lines else "(empty thread)"
 
 
-def _collect_thread_posts(thread: Any, posts: list[tuple[str, str, str]], depth: int = 0) -> None:
+def _collect_thread_posts(thread: BlueskyThread, posts: list[tuple[str, str, str]], depth: int = 0) -> None:
     """Recursively collect posts walking up the parent chain for chronological order."""
     if depth > 10:  # safety limit
         return

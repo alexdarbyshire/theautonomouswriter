@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from agent.llm import OpenRouterClient
+    from agent.types import PostMetadata, WriterMemory
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ def notify_new_post(title: str, description: str, slug: str) -> bool:
         return False
 
 
-def _get_recent_posts(n: int) -> list[dict]:
+def _get_recent_posts(n: int) -> list[PostMetadata]:
     """Read the N most recent posts from the filesystem."""
     if not POSTS_DIR.exists():
         return []
@@ -118,7 +119,7 @@ def _get_recent_posts(n: int) -> list[dict]:
     return posts
 
 
-def maybe_send_recap(memory: dict, llm: OpenRouterClient, system_prompt: str) -> bool:
+def maybe_send_recap(memory: WriterMemory, llm: OpenRouterClient, system_prompt: str) -> bool:
     """Send a recap newsletter if enough posts have accumulated. Non-critical."""
     config = _get_api_config()
     if not config:

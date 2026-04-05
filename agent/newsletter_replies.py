@@ -13,6 +13,12 @@ from cryptography.fernet import Fernet, InvalidToken
 
 if TYPE_CHECKING:
     from agent.llm import OpenRouterClient
+    from agent.types import (
+        NewsletterReplyState,
+        NewsletterReplyStats,
+        SuggestionsData,
+        WriterMemory,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +30,7 @@ MAX_TOKENS_PER_RUN = 30_000
 MAX_TRACKED_IDS = 200
 
 
-def _load_state() -> dict:
+def _load_state() -> NewsletterReplyState:
     if STATE_PATH.exists():
         try:
             return json.loads(STATE_PATH.read_text())
@@ -33,13 +39,13 @@ def _load_state() -> dict:
     return {"replied_ids": [], "subscriber_reply_counts": {}}
 
 
-def _save_state(state: dict) -> None:
+def _save_state(state: NewsletterReplyState) -> None:
     tmp = STATE_PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(state, indent=2))
     os.replace(tmp, STATE_PATH)
 
 
-def _api_get(api_key: str, path: str) -> dict:
+def _api_get(api_key: str, path: str) -> dict[str, object]:
     req = urllib.request.Request(
         f"{BUTTONDOWN_API}/{path}",
         headers={
@@ -51,7 +57,7 @@ def _api_get(api_key: str, path: str) -> dict:
         return json.loads(resp.read().decode())
 
 
-def _api_post(api_key: str, path: str, payload: dict) -> dict:
+def _api_post(api_key: str, path: str, payload: dict[str, str]) -> dict[str, object]:
     data = json.dumps(payload).encode()
     req = urllib.request.Request(
         f"{BUTTONDOWN_API}/{path}",
@@ -92,7 +98,7 @@ def _encrypt_subscriber_id(subscriber_id: str, key: str) -> str:
     return f.encrypt(subscriber_id.encode()).decode()
 
 
-def _find_count_key(reply_counts: dict, email_id: str, subscriber_id: str, enc_key: str) -> tuple[str, int]:
+def _find_count_key(reply_counts: dict[str, int], email_id: str, subscriber_id: str, enc_key: str) -> tuple[str, int]:
     """Find the existing count key for a subscriber by decrypting stored keys.
 
     Returns (key, count). If no match found, creates a new encrypted key with count 0.
@@ -113,7 +119,7 @@ def _find_count_key(reply_counts: dict, email_id: str, subscriber_id: str, enc_k
     return new_key, 0
 
 
-def respond_to_comments(llm: OpenRouterClient, memory: dict, mood: str) -> dict:
+def respond_to_comments(llm: OpenRouterClient, memory: WriterMemory, mood: str) -> NewsletterReplyStats:
     """Fetch newsletter comments and reply in the writer's voice.
 
     Runs every cron invocation, independent of posting schedule.
@@ -149,10 +155,10 @@ def respond_to_comments(llm: OpenRouterClient, memory: dict, mood: str) -> dict:
 def _process_comments(
     api_key: str,
     llm: OpenRouterClient,
-    state: dict,
+    state: NewsletterReplyState,
     mood: str,
     writer_identity: str,
-    stats: dict,
+    stats: NewsletterReplyStats,
     enc_key: str,
 ) -> None:
     replied_ids = state["replied_ids"]
@@ -206,13 +212,13 @@ def _process_comments(
 def _handle_single_comment(
     api_key: str,
     llm: OpenRouterClient,
-    comment: dict,
+    comment: dict[str, object],
     mood: str,
     writer_identity: str,
-    reply_counts: dict,
-    replied_ids: list,
-    replied_set: set,
-    stats: dict,
+    reply_counts: dict[str, int],
+    replied_ids: list[str],
+    replied_set: set[str],
+    stats: NewsletterReplyStats,
     enc_key: str,
 ) -> None:
     comment_id = comment["id"]
@@ -270,7 +276,12 @@ def _handle_single_comment(
     replied_set.add(comment_id)
 
 
-def ingest_comment_suggestions(api_key: str, llm: OpenRouterClient, suggestions_data: dict, encryption_key: str) -> int:
+def ingest_comment_suggestions(
+    api_key: str,
+    llm: OpenRouterClient,
+    suggestions_data: SuggestionsData,
+    encryption_key: str,
+) -> int:
     """Scan recent comments for topic-suggestion-like content.
 
     Short comments (under 300 chars, no threading) that read as suggestions

@@ -3,8 +3,12 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from agent.llm import LLMUnavailableError, OpenRouterClient
+
+if TYPE_CHECKING:
+    from agent.types import EvolveResult, WriterMemory
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +45,9 @@ REFLECTION_PROMPT = (
 
 def reflect_and_evolve(
     body: str,
-    memory: dict,
+    memory: WriterMemory,
     llm: OpenRouterClient | None = None,
-) -> dict:
+) -> EvolveResult:
     """Ask the writer to reflect on what it wrote and optionally evolve its system prompt.
 
     Returns a dict with 'mood', 'reflection', and optionally 'prompt_evolution' keys,

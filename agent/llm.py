@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 import logging
 import os
 import time
+from typing import TYPE_CHECKING
 
 from openai import OpenAI
+
+if TYPE_CHECKING:
+    from agent.types import UsageDict
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +30,7 @@ class OpenRouterClient:
         self.max_retries = 3
         self.timeout = 90
 
-    def _call(self, messages: list[dict], temperature: float, max_tokens: int) -> str:
+    def _call(self, messages: list[dict[str, str]], temperature: float, max_tokens: int) -> str:
         for attempt in range(self.max_retries):
             try:
                 response = self.client.chat.completions.create(
@@ -151,11 +157,11 @@ class OpenRouterClient:
 
     def _call_with_usage(
         self,
-        messages: list[dict],
+        messages: list[dict[str, str]],
         temperature: float,
         max_tokens: int,
         model: str | None = None,
-    ) -> tuple[str, dict]:
+    ) -> tuple[str, UsageDict]:
         """Like _call but returns (content, usage_dict) with token counts."""
         use_model = model or self.model
         for attempt in range(self.max_retries):
@@ -192,14 +198,14 @@ class OpenRouterClient:
                     continue
                 raise LLMUnavailableError(f"LLM unavailable after {attempt + 1} attempts: {e}") from e
 
-    def check_safety(self, text: str) -> tuple[bool, str, dict]:
+    def check_safety(self, text: str) -> tuple[bool, str, UsageDict]:
         """Two-stage safety screen: Llama Guard 4 first (cheap), then main model.
 
         Returns (is_safe, reason, usage). Llama Guard catches clear violations cheaply.
         Content that passes Llama Guard gets a second check from the main model for
         nuanced cases (prompt injection, spam, context-specific issues).
         """
-        total_usage: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0}
+        total_usage: UsageDict = {"prompt_tokens": 0, "completion_tokens": 0}
 
         # Stage 1: Llama Guard 4 (cheap, fast)
         guard_content, guard_usage = self._call_with_usage(
@@ -251,7 +257,7 @@ class OpenRouterClient:
         reader_message: str,
         mood: str,
         is_final: bool = False,
-    ) -> tuple[str, dict]:
+    ) -> tuple[str, UsageDict]:
         """Compose a reply to a newsletter subscriber. Returns (text, usage)."""
         closing_note = ""
         if is_final:
@@ -281,7 +287,7 @@ class OpenRouterClient:
         content, usage = self._call_with_usage(messages, temperature=0.8, max_tokens=800)
         return content.strip(), usage
 
-    def compose_reply(self, writer_identity: str, thread_context: str, mood: str) -> tuple[str, dict]:
+    def compose_reply(self, writer_identity: str, thread_context: str, mood: str) -> tuple[str, UsageDict]:
         """Compose a reply to a Bluesky thread. Returns (text, usage)."""
         messages = [
             {

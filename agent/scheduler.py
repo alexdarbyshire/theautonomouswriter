@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 import random
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from agent.types import WriterMemory
 
 
-def should_post(memory: dict) -> bool:
+def should_post(memory: WriterMemory) -> bool:
     next_scheduled = memory.get("next_scheduled_post")
     if next_scheduled is None:
         return True

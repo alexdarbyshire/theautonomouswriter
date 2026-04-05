@@ -76,7 +76,7 @@ def _split_post(content: str) -> tuple[str, str] | None:
     return match.group(1), match.group(2)
 
 
-def _rebuild_post(fm_dict: dict, body: str) -> str:
+def _rebuild_post(fm_dict: dict[str, object], body: str) -> str:
     """Serialize a frontmatter dict + body into a full post string."""
     frontmatter_yaml = "---\n"
     for key, value in fm_dict.items():

@@ -11,6 +11,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 if TYPE_CHECKING:
     from agent.llm import OpenRouterClient
+    from agent.types import SuggestionEntry, SuggestionsData
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ DEFAULT_STRUCTURE = {
 }
 
 
-def load_suggestions(path: Path = SUGGESTIONS_PATH) -> dict:
+def load_suggestions(path: Path = SUGGESTIONS_PATH) -> SuggestionsData:
     if path.exists():
         try:
             return json.loads(path.read_text())
@@ -39,7 +40,7 @@ def load_suggestions(path: Path = SUGGESTIONS_PATH) -> dict:
     return json.loads(json.dumps(DEFAULT_STRUCTURE))
 
 
-def save_suggestions(data: dict, path: Path = SUGGESTIONS_PATH) -> None:
+def save_suggestions(data: SuggestionsData, path: Path = SUGGESTIONS_PATH) -> None:
     tmp = path.with_suffix(".tmp")
     with open(tmp, "w") as f:
         json.dump(data, f, indent=2, default=str)
@@ -58,7 +59,7 @@ def decrypt_identifier(token: str, key: str) -> str:
 
 
 def check_rate_limit(
-    suggestions: dict,
+    suggestions: SuggestionsData,
     identifier: str,
     key: str,
     source: str,
@@ -89,7 +90,7 @@ def check_rate_limit(
     return count < max_count
 
 
-def screen_pending(suggestions: dict, llm: OpenRouterClient) -> None:
+def screen_pending(suggestions: SuggestionsData, llm: OpenRouterClient) -> None:
     pending = [s for s in suggestions.get("suggestions", []) if s.get("status") == "pending"]
     for entry in pending[:MAX_SCREEN_PER_RUN]:
         try:
@@ -104,12 +105,12 @@ def screen_pending(suggestions: dict, llm: OpenRouterClient) -> None:
             logger.warning("Failed to screen suggestion %s: %s", entry["id"], e)
 
 
-def get_safe_suggestions(suggestions: dict) -> list:
+def get_safe_suggestions(suggestions: SuggestionsData) -> list[SuggestionEntry]:
     safe = [s for s in suggestions.get("suggestions", []) if s.get("status") == "screened_safe"]
     return safe[:MAX_SAFE_FOR_PROMPT]
 
 
-def mark_used(suggestions: dict, suggestion_id: str, slug: str) -> None:
+def mark_used(suggestions: SuggestionsData, suggestion_id: str, slug: str) -> None:
     for s in suggestions.get("suggestions", []):
         if s["id"] == suggestion_id:
             s["status"] = "used"
@@ -117,7 +118,7 @@ def mark_used(suggestions: dict, suggestion_id: str, slug: str) -> None:
             return
 
 
-def cleanup(suggestions: dict) -> None:
+def cleanup(suggestions: SuggestionsData) -> None:
     now = datetime.now(UTC)
     remaining = []
     for s in suggestions.get("suggestions", []):
@@ -145,7 +146,7 @@ def cleanup(suggestions: dict) -> None:
     suggestions["last_cleanup"] = now.isoformat()
 
 
-def format_suggestions_for_prompt(safe: list) -> str:
+def format_suggestions_for_prompt(safe: list[SuggestionEntry]) -> str:
     lines = [
         "Some of your readers have shared ideas they'd love to see you explore.",
         "Read through them \u2014 if one sparks something, let it pull you in.",
@@ -157,7 +158,7 @@ def format_suggestions_for_prompt(safe: list) -> str:
     return "\n".join(lines)
 
 
-def match_suggestion(topic: str, safe: list, threshold: float = 0.5) -> str | None:
+def match_suggestion(topic: str, safe: list[SuggestionEntry], threshold: float = 0.5) -> str | None:
     """Find the best-matching suggestion for a chosen topic by word overlap.
 
     Returns the suggestion ID if a match is found, None otherwise.
