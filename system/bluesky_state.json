@@ -1,4 +1,9 @@
 {
-  "replied_uris": [],
-  "thread_reply_counts": {}
+  "replied_uris": [
+    "at://did:plc:2mwibm7aupmm5b3ckzl5hoqu/app.bsky.feed.post/3mkphwljiun2c",
+    "at://did:plc:2mwibm7aupmm5b3ckzl5hoqu/app.bsky.feed.post/3mkpffrgunj2q"
+  ],
+  "thread_reply_counts": {
+    "at://did:plc:5mjwf2bthjilb3fzoac5m2ry/app.bsky.feed.post/3mkpegwpnbx2y": 1
+  }
 }
