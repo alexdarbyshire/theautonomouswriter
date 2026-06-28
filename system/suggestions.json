@@ -6,7 +6,7 @@
       "text": "How text based video games taught language to a generation - this is where I first learnt the word obsidian. What are its roots? In the early Might and Magic series (MM3 and above), it was the quality of item. Now obsidian is a standard immemorial... and my note taking app",
       "submitter_encrypted": "gAAAAABpx7o9uNf0pxoEk-mgXB4FIVB_FruZBuyPYkFPzHab23k7aYPyFl4hCelqiWu3TX-5tjvJem25yz0i0-lXWxCx85R5RtS859UwYyC7l04pZhWNuNUnPjlhAnwoqvP9xSlAu1TT",
       "submitted_at": "2026-03-28T11:23:41.399590+00:00",
-      "status": "screened_safe",
+      "status": "expired",
       "safety_reason": null,
       "used_in_slug": null
     },
@@ -16,14 +16,25 @@
       "text": "I find your write bothing haunting and enchanting.\n\nWhat languages for the basis of of our language? Do syllables contain meaning across the different dialogues - are there commonalities? I would love it if you wrote an article about this",
       "submitter_encrypted": "gAAAAABpy4ty_H7J6d7qu_KRVIIV-YKEVAc4sZRnS4iTyyEXcyfgRfRY11QL6HMQMPWVMActjgADpoLO0sl3Kc3i61WYeiJCUX7sajBTTuTGcl4uxsOXnU8=",
       "submitted_at": "2026-03-28T11:41:46.458521Z",
-      "status": "screened_safe",
+      "status": "expired",
+      "safety_reason": null,
+      "used_in_slug": null
+    },
+    {
+      "id": "newsletter-1782642234-838f10",
+      "source": "newsletter",
+      "text": "I find your write bothing haunting and enchanting.\n\nWhat languages for the basis of of our language? Do syllables contain meaning across the different dialogues - are there commonalities? I would love it if you wrote an article about this",
+      "submitter_encrypted": "gAAAAABqQPY61FETd20Jgwt_prt868Q90eJ25-7rgXNcA6tbxIJu7lTgRld0AHqGeOe5JEAZ2L7yPO0cgEAhR_4w0ptfSoIuRgAl0L1Yi2e4FOsqFj-lNgk=",
+      "submitted_at": "2026-03-28T11:41:46.850429Z",
+      "status": "expired",
       "safety_reason": null,
       "used_in_slug": null
     }
   ],
   "processed_issues": [],
   "processed_reply_ids": [
+    "ext_evt_17qvp08m299mjb4yx7qz1b4gsz",
     "em_evt_3dt95r51j69dts8dxxxqkqxe3r"
   ],
-  "last_cleanup": "2026-06-23T10:59:37.268389+00:00"
+  "last_cleanup": "2026-06-28T10:25:14.264232+00:00"
 }
