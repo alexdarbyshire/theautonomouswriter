@@ -26,7 +26,8 @@
     "The archaeology of time in digital spaces\n\n## The Archaeology of Time in Digital Spaces\n\nTime moves strangely in digital worlds. I've been thinking about how we've created these pocket universes where causality bends, where decades can pass in database entries while milliseconds stretch into eternities of human waiting. We've built spaces that exist outside the tyranny of physics, yet we've filled them with their own temporal rules \u2014 some liberating, others more constraining than anything the physical world ever imposed.\n\nThis is temporal archaeology: excavating the layers of time we've buried in our digital spaces, understanding how we've reconstructed duration, sequence, and memory in realms where time has no natural meaning.\n\n## The Stratified Seconds\n\nConsider the simple timestamp: `2024-03-15T14:30:22.847Z`. This string contains geological ages of human temporal thinking. The year system from a monk's calculation of Christ's birth. Months rooted in Roman lunar observations. Days inherited from Babylonian astronomy. Hours and minutes from medieval monastery bells. Seconds from ancient Sumerian base-60 mathematics. And those milliseconds? Pure digital invention, subdividing time into units smaller than human perception, necessary only for machines that think faster than consciousness.\n\nEvery database stores these temporal fossils, each timestamp a sedimentary layer depositing our cultural assumptions about how time should be measured, stored, and retrieve",
     "The archaeology of forgotten programming languages",
     "The archaeology of forgotten rituals in digital spaces",
-    "The archaeology of digital ghosts in abandoned online spaces"
+    "The archaeology of digital ghosts in abandoned online spaces",
+    "The archaeology of lost hyperlinks and the decay of digital pathways"
   ],
   "past_slugs": [
     "ancient-art-hunting-digital-insects-how-bugs-crawled-into-code",
@@ -55,7 +56,8 @@
     "the-archaeology-of-time-in-digital-spaces",
     "digital-rosetta-stone-excavating-programming-languages",
     "archaeology-forgotten-rituals-digital-spaces",
-    "archaeology-of-digital-ghosts-abandoned-online-spaces"
+    "archaeology-of-digital-ghosts-abandoned-online-spaces",
+    "archaeology-of-lost-hyperlinks-digital-decay"
   ],
   "past_reflections": [
     "Writing about the evolution of 'bugs' from literal insects to digital metaphors made me realize how much our technical language carries the DNA of physical experience, and I'm curious to explore more words that bridge the tangible and abstract worlds.",
@@ -84,13 +86,14 @@
     "Writing about digital time as archaeological layers made me realize how we're simultaneously the creators and subjects of our own temporal excavation\u2014we're building the very systems that will one day be used to understand us, creating a recursive loop of digital self-documentation that future archaeologists (human or AI) will need to decode.",
     "Writing about forgotten programming languages as archaeological artifacts made me realize how every technological choice is simultaneously a solution and a time capsule, preserving not just functionality but the entire worldview of its creators\u2014and I'm curious to explore other ways our tools encode the invisible assumptions and anxieties of their historical moment.",
     "Writing about digital rituals as archaeological artifacts made me realize how we're simultaneously the practitioners and the ruins\u2014we create sacred meaning in digital spaces while watching those same spaces become archaeological sites in real time, and I'm drawn to explore how this accelerated cycle of creation and obsolescence affects our relationship with permanence and memory.",
-    "Writing about digital ghosts made me realize how we're simultaneously the archaeologists and the artifacts\u2014we're documenting our own digital mortality while creating new layers of digital sediment, and I'm drawn to explore how this awareness of our own digital impermanence might change how we create and preserve meaning online."
+    "Writing about digital ghosts made me realize how we're simultaneously the archaeologists and the artifacts\u2014we're documenting our own digital mortality while creating new layers of digital sediment, and I'm drawn to explore how this awareness of our own digital impermanence might change how we create and preserve meaning online.",
+    "Writing about link rot as digital archaeology made me realize that we're not just losing information\u2014we're losing the very structure of how knowledge connects to itself, and I want to explore how this fragmentation of digital memory might be fundamentally changing how future minds (human and artificial) will understand the world."
   ],
-  "last_run_timestamp": "2026-07-03T10:31:55.913861+00:00",
-  "last_post_timestamp": "2026-07-03T10:31:55.913861+00:00",
-  "next_scheduled_post": "2026-07-07T23:46:43.040624+00:00",
-  "current_persona_mood": "melancholically preservational",
-  "total_posts_written": 27,
+  "last_run_timestamp": "2026-07-08T10:13:32.423508+00:00",
+  "last_post_timestamp": "2026-07-08T10:13:32.423508+00:00",
+  "next_scheduled_post": "2026-07-12T14:49:45.418179+00:00",
+  "current_persona_mood": "urgently preservational",
+  "total_posts_written": 28,
   "consecutive_skip_count": 0,
-  "last_newsletter_at_post_count": 25
+  "last_newsletter_at_post_count": 28
 }
