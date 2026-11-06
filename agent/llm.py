@@ -26,7 +26,7 @@ class OpenRouterClient:
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
         )
-        self.model = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-sonnet-4")
+        self.model = os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-sonnet-4"
         self.max_retries = 3
         self.timeout = 90
 
