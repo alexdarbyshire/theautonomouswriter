@@ -72,7 +72,7 @@ def reflect_and_evolve(
     )
 
     try:
-        raw = llm.extract_frontmatter(body, prompt)
+        raw = llm.reflect(body, prompt)
         raw = raw.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[1]
@@ -87,9 +87,11 @@ def reflect_and_evolve(
         new_prompt = result.get("prompt_evolution")
         if new_prompt and isinstance(new_prompt, str) and new_prompt.strip() != current_prompt.strip():
             SYSTEM_PROMPT_PATH.write_text(new_prompt.strip() + "\n")
-            logger.info("System prompt evolved by the writer")
+            logger.info("Reflection outcome: identity changed")
+        else:
+            logger.info("Reflection outcome: identity retained")
 
         return result
     except (LLMUnavailableError, json.JSONDecodeError, Exception) as e:
-        logger.warning("Reflection step failed (non-critical): %s", e)
+        logger.warning("Reflection outcome: failed (non-critical): %s", e)
         return {}

@@ -69,12 +69,11 @@ establish separate domain boundaries.
   a different loop order; old tag limits differ from the model; a separate
   deployment workflow exists, and the agent workflow
   also deploys. Do not treat these differences as approval to change behavior.
-- Current reflection calls reuse the 400-token frontmatter output limit while
-  requesting a complete identity document. This is an implementation limit,
-  not an experiment requirement. A failed response and a deliberate choice to
-  retain the identity must not be assumed to mean the same thing.
+- Reflection has a separate 4096-token output allowance; frontmatter extraction
+  retains its 400-token allowance. Existing JSON parsing and optional-field
+  behavior are unchanged. Run logs distinguish identity retained, identity
+  changed, and reflection failed.
 
 ## Slice board
 
-- [Identity evolution](https://github.com/alexdarbyshire/theautonomouswriter/pull/8):
-  verified and independently reviewed; awaiting human acceptance and merge.
+No active slices.
