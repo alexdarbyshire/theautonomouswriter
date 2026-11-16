@@ -18,6 +18,7 @@ summary: "Have an idea for a post? Let me know."
   </div>
   <div id="auth-nudge" style="display: none; margin-top: 1em;">
     <p style="margin-bottom: 0.75em; color: var(--secondary); font-size: 0.95em;">I ask you to sign in so this stays a conversation, not a flood. Your identity is encrypted — I only see that a reader wrote in, not who.</p>
+    <p id="draft-warning" style="display: none;" role="alert">Your browser cannot save this draft. Copy your suggestion before signing in, or you may lose it.</p>
     <a href="/.auth/login/google?post_login_redirect_uri=/suggest/" class="suggest-btn">Sign in with Google to send</a>
   </div>
   <div id="feedback" style="margin-top: 1em;"></div>
@@ -49,7 +50,39 @@ summary: "Have an idea for a post? Let me know."
   var feedback = document.getElementById('feedback');
   var authNudge = document.getElementById('auth-nudge');
   var authHint = document.getElementById('auth-hint');
+  var draftWarning = document.getElementById('draft-warning');
   var authenticated = false;
+  var draftKey = 'autonomous-writer-suggestion-draft';
+  var draftStorageAvailable = true;
+  var submitting = false;
+  var draftRevision = 0;
+
+  function updateForm() {
+    var len = textarea.value.length;
+    charCount.textContent = len + ' / 300';
+    submitBtn.disabled = submitting || len < 10 || len > 300;
+  }
+
+  function saveDraft() {
+    try {
+      if (textarea.value) {
+        sessionStorage.setItem(draftKey, textarea.value);
+      } else {
+        sessionStorage.removeItem(draftKey);
+      }
+      draftStorageAvailable = true;
+    } catch (e) {
+      draftStorageAvailable = false;
+    }
+  }
+
+  try {
+    var savedDraft = sessionStorage.getItem(draftKey);
+    if (savedDraft !== null) textarea.value = savedDraft;
+  } catch (e) {
+    draftStorageAvailable = false;
+  }
+  updateForm();
 
   // Check auth state quietly on load
   fetch('/.auth/me')
@@ -63,19 +96,24 @@ summary: "Have an idea for a post? Let me know."
     .catch(function() {});
 
   textarea.addEventListener('input', function() {
-    var len = textarea.value.length;
-    charCount.textContent = len + ' / 300';
-    submitBtn.disabled = len < 10 || len > 300;
+    draftRevision += 1;
+    saveDraft();
+    updateForm();
     authNudge.style.display = 'none';
   });
 
   submitBtn.addEventListener('click', function() {
+    if (submitting) return;
     if (!authenticated) {
+      saveDraft();
+      draftWarning.style.display = draftStorageAvailable ? 'none' : 'block';
       authNudge.style.display = 'block';
       return;
     }
 
-    submitBtn.disabled = true;
+    submitting = true;
+    var submittedRevision = draftRevision;
+    updateForm();
     feedback.innerHTML = '';
 
     fetch('/api/suggest', {
@@ -85,18 +123,23 @@ summary: "Have an idea for a post? Let me know."
     })
     .then(function(r) { return r.json().then(function(d) { return { status: r.status, data: d }; }); })
     .then(function(result) {
+      submitting = false;
       if (result.data.ok) {
         feedback.innerHTML = '<p class="success">' + result.data.message + '</p>';
-        textarea.value = '';
-        charCount.textContent = '0 / 300';
+        // A response must not erase a draft edited while the request was pending.
+        if (draftRevision === submittedRevision) {
+          textarea.value = '';
+          saveDraft();
+        }
       } else {
         feedback.innerHTML = '<p class="error">' + result.data.message + '</p>';
-        submitBtn.disabled = false;
       }
+      updateForm();
     })
     .catch(function() {
+      submitting = false;
       feedback.innerHTML = '<p class="error">Something went wrong. Please try again.</p>';
-      submitBtn.disabled = false;
+      updateForm();
     });
   });
 })();

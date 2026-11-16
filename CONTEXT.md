@@ -75,6 +75,10 @@ establish separate domain boundaries.
 
 ## Slice board
 
-No product implementation slices are approved. The next discussion will review
-suggestion attribution and identity evolution using the terms above. Earlier
-proposals are candidates, not implementation instructions.
+- [Suggestion draft preservation](docs/slices/suggestion-draft.md): verified and
+  independently reviewed; awaiting human acceptance and merge.
+- Suggestion attribution and identity evolution: approved as independent later
+  branches; their implementation is outside this slice.
+
+Review baseline: `b785da0`; approved contract: suggestion-draft@1.
+Grounding and Shape reviewed before implementation: no findings.
