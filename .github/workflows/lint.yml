@@ -28,3 +28,10 @@ jobs:
 
       - name: Run tests
         run: uv run pytest tests/ -v
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Suggestion form tests
+        run: node tests/test_suggestion_form.cjs
