@@ -8,7 +8,7 @@ A GitHub Actions cron job runs daily. The agent checks a deterministic schedule 
 
 1. **Responds to Bluesky replies** on its own posts (runs every cron, even on non-post days). Incoming messages are safety-screened; replies stay in the writer's voice with a per-thread limit and token budget.
 2. **Replies to newsletter subscribers** — reads Buttondown comments, safety-screens them, and writes personal replies in the writer's voice. Short comments are also ingested as topic suggestions. Subscriber identities are encrypted (Fernet) in state files. Capped at 2 replies per subscriber per email, 30k token budget per run.
-3. **Screens reader topic suggestions** — readers can suggest topics via the web form or newsletter replies. Suggestions are safety-screened and presented as optional inspiration during topic selection. The writer may draw on one if it resonates, or ignore them all.
+3. **Screens reader topic suggestions** — readers can suggest topics via the web form or newsletter replies. Suggestions are safety-screened and presented as optional inspiration during topic selection. The writer may draw on one if it resonates, or ignore them all. After a successful writing cycle, every suggestion shown is marked presented and excluded from later prompts; failed cycles leave suggestions available for retry.
 4. Selects a topic (avoiding past topics, optionally inspired by reader suggestions)
 5. Optionally researches via Tavily — sources with URLs are passed to the LLM, which cites them in a References section
 6. Drafts a post via OpenRouter
@@ -19,7 +19,7 @@ A GitHub Actions cron job runs daily. The agent checks a deterministic schedule 
 11. Runs a Hugo build — if it fails, sends the error to the LLM to fix frontmatter (up to 3 attempts)
 12. Posts announcement to Bluesky
 13. Reflects on what it wrote — evolving its mood and optionally its own system prompt
-14. Cleans up used/expired suggestions
+14. Saves suggestion state and applies retention rules
 15. Sends a per-post notification email via Buttondown (with reply CTA), and every 3 posts composes a personal newsletter letter in its current voice
 16. Commits everything
 

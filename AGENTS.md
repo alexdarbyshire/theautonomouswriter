@@ -29,7 +29,8 @@ added, follow it to the nearest applicable context before starting work.
 - Preserve the ordered stages in `agent/main.py`: load memory; process Bluesky
   and newsletter replies; check schedule; assemble context and suggestions;
   select topic; research; draft; extract frontmatter; validate; generate an
-  optional cover; write post; check Hugo; announce; reflect; save memory; clean
+  optional cover; write post; check Hugo; mark offered suggestions presented;
+  announce; reflect; save memory; clean
   and save suggestions; send newsletter. Consult the code for conditional paths.
 - Keep the scheduler's public seams `should_post()` and `next_post_time()`.
   Keep named validator checks returning `(bool, str)` and stop on first failure.
@@ -50,7 +51,10 @@ uv sync
 uv run pytest tests/
 uv run ruff check agent/ tests/
 uv run ruff format --check agent/ tests/
+node tests/test_suggestion_form.cjs
 ```
+
+CI runs the suggestion form tests with Node.js 24.
 
 For a site change, run `hugo` from `site/`; use `hugo server` there for a local
 preview. Before committing Python changes, run Ruff fixes and formatting for

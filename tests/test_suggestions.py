@@ -12,8 +12,7 @@ from agent.suggestions import (
     format_suggestions_for_prompt,
     get_safe_suggestions,
     load_suggestions,
-    mark_used,
-    match_suggestion,
+    mark_presented,
     save_suggestions,
     screen_pending,
 )
@@ -38,7 +37,6 @@ def _make_suggestion(id="web-1-abc", status="pending", source="web", text="Test 
         "submitted_at": _ago(days_ago),
         "status": status,
         "safety_reason": None,
-        "used_in_slug": None,
     }
     return entry
 
@@ -106,11 +104,15 @@ def test_get_safe_suggestions():
     assert all(s["status"] == "screened_safe" for s in safe)
 
 
-def test_mark_used():
-    data = {"suggestions": [_make_suggestion(id="web-1-abc", status="screened_safe")]}
-    mark_used(data, "web-1-abc", "my-post-slug")
-    assert data["suggestions"][0]["status"] == "used"
-    assert data["suggestions"][0]["used_in_slug"] == "my-post-slug"
+def test_mark_presented_updates_only_offered_safe_suggestions():
+    entries = [
+        _make_suggestion(id="offered", status="screened_safe"),
+        _make_suggestion(id="unoffered", status="screened_safe"),
+        _make_suggestion(id="unsafe", status="screened_unsafe"),
+    ]
+    data = {"suggestions": entries}
+    mark_presented(data, {"offered", "unsafe"})
+    assert [s["status"] for s in entries] == ["presented", "screened_safe", "screened_unsafe"]
 
 
 def test_cleanup_expires_old_safe():
@@ -125,12 +127,18 @@ def test_cleanup_removes_old_unsafe():
     assert len(data["suggestions"]) == 0
 
 
-def test_cleanup_removes_old_used():
-    entry = _make_suggestion(status="used", days_ago=31)
-    entry["used_in_slug"] = "some-slug"
+def test_cleanup_keeps_old_expired():
+    entry = _make_suggestion(status="expired", days_ago=31)
     data = {"suggestions": [entry]}
     cleanup(data)
-    assert len(data["suggestions"]) == 0
+    assert data["suggestions"] == [entry]
+
+
+def test_cleanup_keeps_old_presented():
+    data = {"suggestions": [_make_suggestion(status="presented", days_ago=31)]}
+    cleanup(data)
+    assert len(data["suggestions"]) == 1
+    assert data["suggestions"][0]["status"] == "presented"
 
 
 def test_cleanup_keeps_recent():
@@ -138,11 +146,12 @@ def test_cleanup_keeps_recent():
         "suggestions": [
             _make_suggestion(id="safe-1", status="screened_safe", days_ago=5),
             _make_suggestion(id="unsafe-1", status="screened_unsafe", days_ago=3),
-            _make_suggestion(id="used-1", status="used", days_ago=10),
+            _make_suggestion(id="expired-1", status="expired", days_ago=10),
+            _make_suggestion(id="presented-1", status="presented", days_ago=10),
         ]
     }
     cleanup(data)
-    assert len(data["suggestions"]) == 3
+    assert len(data["suggestions"]) == 4
 
 
 def test_encrypt_decrypt_roundtrip():
@@ -212,31 +221,9 @@ def test_format_suggestions_for_prompt():
     result = format_suggestions_for_prompt(safe)
     assert '"The ethics of AI"' in result
     assert '"Ancient maps"' in result
-    # Should not expose internal IDs to the writer
     assert "web-1-abc" not in result
     assert "github-2-def" not in result
     assert "curiosity" in result
-
-
-def test_match_suggestion_finds_match():
-    safe = [
-        {"id": "web-1-abc", "text": "The ethics of AI writing"},
-        {"id": "github-2-def", "text": "Ancient maps and exploration"},
-    ]
-    result = match_suggestion("The ethics of AI writing about itself", safe)
-    assert result == "web-1-abc"
-
-
-def test_match_suggestion_no_match():
-    safe = [
-        {"id": "web-1-abc", "text": "The ethics of AI writing"},
-    ]
-    result = match_suggestion("The philosophy of waiting rooms", safe)
-    assert result is None
-
-
-def test_match_suggestion_empty_list():
-    assert match_suggestion("Any topic", []) is None
 
 
 def test_disabled_when_flag_off(monkeypatch):

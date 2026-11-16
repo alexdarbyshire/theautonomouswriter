@@ -23,8 +23,7 @@ from agent.suggestions import (
     format_suggestions_for_prompt,
     get_safe_suggestions,
     load_suggestions,
-    mark_used,
-    match_suggestion,
+    mark_presented,
     save_suggestions,
     screen_pending,
 )
@@ -101,6 +100,7 @@ def main() -> None:
     # 4b. Suggestion screening (feature-flagged, non-critical)
     suggestions_data = None
     suggestions_context = ""
+    offered_suggestion_ids: set[str] = set()
     if os.environ.get("ENABLE_SUGGESTIONS", "").lower() == "true":
         try:
             suggestions_data = load_suggestions()
@@ -117,6 +117,7 @@ def main() -> None:
             safe = get_safe_suggestions(suggestions_data)
             if safe:
                 suggestions_context = "\n\n" + format_suggestions_for_prompt(safe)
+                offered_suggestion_ids = {s["id"] for s in safe}
                 logger.info("Loaded %d safe suggestions for topic prompt", len(safe))
         except Exception as e:
             logger.warning("Suggestion processing failed (non-critical): %s", e)
@@ -136,23 +137,15 @@ def main() -> None:
         logger.error("Failed to select topic: %s", e)
         sys.exit(1)
 
-    # 5b. Check if a reader suggestion inspired the topic (semantic match)
-    safe_suggestions = get_safe_suggestions(suggestions_data) if suggestions_data else []
-    suggestion_id = match_suggestion(topic, safe_suggestions)
-    reader_inspired = False
-    if suggestion_id and suggestions_data:
-        mark_used(suggestions_data, suggestion_id, "")  # slug filled in after frontmatter
-        reader_inspired = True
-        logger.info("Topic inspired by suggestion: %s", suggestion_id)
-
     # 3. Research (now that we have a topic)
     research_context = research_topic(topic)
 
     # 5. Draft article
     draft_prompt = f"Write a blog post about: {topic}\n\n"
-    if reader_inspired:
+    if suggestions_context:
+        draft_prompt += suggestions_context + "\n\n"
         draft_prompt += (
-            "This topic was sparked by a reader suggestion. If it feels natural, "
+            "If this topic was sparked by a reader suggestion, and it feels natural, "
             "you might acknowledge that a reader put this idea in your head \u2014 "
             "but only if it serves the piece. Don't force it.\n\n"
         )
@@ -201,10 +194,7 @@ def main() -> None:
     today = datetime.now(UTC).strftime("%Y-%m-%d")
     frontmatter_data["date"] = today
 
-    # Fill in the slug on the used suggestion now that we have it
     slug = frontmatter_data.get("slug", "")
-    if suggestion_id and suggestions_data:
-        mark_used(suggestions_data, suggestion_id, slug)
 
     # 7. Validation
     passed, reason = run_all_checks(slug, body, frontmatter_data, past_slugs)
@@ -267,6 +257,9 @@ def main() -> None:
     if not validate_and_fix(post_path, SITE_DIR, llm):
         logger.error("Hugo validation failed after fix attempts")
         sys.exit(1)
+
+    if suggestions_data is not None:
+        mark_presented(suggestions_data, offered_suggestion_ids)
 
     # 8c. Social posting (feature-flagged, non-critical)
     post_to_bluesky(
