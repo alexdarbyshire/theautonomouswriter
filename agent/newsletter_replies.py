@@ -358,7 +358,6 @@ def ingest_comment_suggestions(
                 "submitted_at": submitted_at,
                 "status": "screened_safe",
                 "safety_reason": None,
-                "used_in_slug": None,
             }
         )
         processed.add(cid)

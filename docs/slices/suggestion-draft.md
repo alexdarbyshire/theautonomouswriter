@@ -22,7 +22,7 @@ Run `node tests/test_suggestion_form.cjs`. The tests execute the actual page
 script with browser storage, DOM, auth, and API substitutes. They cover return
 from sign-in, reload, cancellation, submission success and failure, blocked
 storage, deletion, and edits during submission. The existing CI workflow runs
-these tests with Node 22 and no package dependencies.
+these tests with Node 24 and no package dependencies.
 
 Run a Hugo build from `site/`, plus the repository lint and Python test gates.
 Human review and merge remain required before this slice is complete. Real

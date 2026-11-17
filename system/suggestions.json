@@ -7,8 +7,7 @@
       "submitter_encrypted": "gAAAAABqxtKYsl8SCMKdqW7T0b_TyypPtt0XhsmpdcEdcQ6PWH0MaiVHbK9dFQF7W7TcJGbrmx6_a010XsYMKGIgUCRzqIiLYgy6Ljy51QtDYSn5lveilbyla-LFmM6eRLwAhTMzwdU5",
       "submitted_at": "2026-10-07T23:15:36.819665+00:00",
       "status": "screened_safe",
-      "safety_reason": null,
-      "used_in_slug": null
+      "safety_reason": null
     }
   ],
   "processed_issues": [],

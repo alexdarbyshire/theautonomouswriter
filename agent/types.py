@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Protocol, TypedDict, runtime_checkable
+from typing import Literal, Protocol, TypedDict, runtime_checkable
 
 # -- atproto SDK structural types (used in bluesky_replies.py) --
 
@@ -96,15 +96,17 @@ class EvolveResult(TypedDict, total=False):
     prompt_evolution: str | None
 
 
+SuggestionStatus = Literal["pending", "screened_safe", "screened_unsafe", "presented", "expired"]
+
+
 class SuggestionEntry(TypedDict, total=False):
     id: str
     source: str
     text: str
     submitter_encrypted: str
     submitted_at: str
-    status: str
+    status: SuggestionStatus
     safety_reason: str | None
-    used_in_slug: str | None
 
 
 class SuggestionsData(TypedDict, total=False):

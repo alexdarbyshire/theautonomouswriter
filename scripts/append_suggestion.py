@@ -63,7 +63,6 @@ def main() -> None:
         "submitted_at": submitted_at,
         "status": "screened_safe",
         "safety_reason": None,
-        "used_in_slug": None,
     }
 
     suggestions["suggestions"].append(entry)

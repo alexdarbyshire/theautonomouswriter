@@ -21,7 +21,6 @@ MAX_SCREEN_PER_RUN = 10
 MAX_SAFE_FOR_PROMPT = 5
 EXPIRE_SAFE_DAYS = 90
 REMOVE_UNSAFE_DAYS = 7
-REMOVE_USED_DAYS = 30
 
 DEFAULT_STRUCTURE = {
     "suggestions": [],
@@ -110,12 +109,10 @@ def get_safe_suggestions(suggestions: SuggestionsData) -> list[SuggestionEntry]:
     return safe[:MAX_SAFE_FOR_PROMPT]
 
 
-def mark_used(suggestions: SuggestionsData, suggestion_id: str, slug: str) -> None:
-    for s in suggestions.get("suggestions", []):
-        if s["id"] == suggestion_id:
-            s["status"] = "used"
-            s["used_in_slug"] = slug
-            return
+def mark_presented(suggestions: SuggestionsData, suggestion_ids: set[str]) -> None:
+    for entry in suggestions.get("suggestions", []):
+        if entry["id"] in suggestion_ids and entry.get("status") == "screened_safe":
+            entry["status"] = "presented"
 
 
 def cleanup(suggestions: SuggestionsData) -> None:
@@ -135,9 +132,7 @@ def cleanup(suggestions: SuggestionsData) -> None:
         if status == "screened_safe" and age > timedelta(days=EXPIRE_SAFE_DAYS):
             s["status"] = "expired"
             remaining.append(s)
-        elif (status == "screened_unsafe" and age > timedelta(days=REMOVE_UNSAFE_DAYS)) or (
-            status in ("used", "expired") and age > timedelta(days=REMOVE_USED_DAYS)
-        ):
+        elif status == "screened_unsafe" and age > timedelta(days=REMOVE_UNSAFE_DAYS):
             continue  # drop it
         else:
             remaining.append(s)
@@ -154,27 +149,5 @@ def format_suggestions_for_prompt(safe: list[SuggestionEntry]) -> str:
         "",
     ]
     for s in safe:
-        lines.append(f'- "{s["text"]}"')
+        lines.append(f"- {json.dumps(s['text'], ensure_ascii=False)}")
     return "\n".join(lines)
-
-
-def match_suggestion(topic: str, safe: list[SuggestionEntry], threshold: float = 0.5) -> str | None:
-    """Find the best-matching suggestion for a chosen topic by word overlap.
-
-    Returns the suggestion ID if a match is found, None otherwise.
-    """
-    if not safe:
-        return None
-    topic_words = set(topic.lower().split())
-    best_id = None
-    best_score = 0.0
-    for s in safe:
-        suggestion_words = set(s["text"].lower().split())
-        if not suggestion_words:
-            continue
-        overlap = len(topic_words & suggestion_words)
-        score = overlap / len(suggestion_words)
-        if score > best_score:
-            best_score = score
-            best_id = s["id"]
-    return best_id if best_score >= threshold else None

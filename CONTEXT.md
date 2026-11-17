@@ -21,14 +21,12 @@ establish separate domain boundaries.
 - **Topic:** The subject selected before research and drafting. `past_topics`
   records selection output; it is not the post title or slug.
 - **Reader suggestion:** Optional inspiration submitted by a reader. It has an
-  ID, text, source, submission time, screening status, and optional post link in
+  ID, text, source, submission time, and lifecycle status in
   [suggestion state](system/suggestions.json). It is not an assignment.
-- **Suggestion attribution:** The link between a selected topic and a reader
-  suggestion. Current code infers this link through literal word overlap. It
-  does not measure semantic similarity or prove why the writer chose a topic.
-- **Used suggestion:** A suggestion with status `used` and `used_in_slug` linking
-  it to a post. It is excluded from later topic prompts. A suggestion shown in a
-  prompt is not automatically used.
+- **Presented suggestion:** A suggestion included in the topic-selection prompt
+  for a writing cycle that produced a post and passed Hugo validation. The
+  application records this fact with status `presented`, regardless of the
+  selected topic. Presented suggestions are excluded from later prompts.
 - **Post:** A validated article body with YAML frontmatter. Its unique slug
   identifies it. Hugo accepts a flat Markdown file or a page bundle with an image.
 - **Writer memory:** The schedule, topic and slug history, mood, reflections, and
@@ -43,6 +41,10 @@ establish separate domain boundaries.
 ## Constraints
 
 - Reader suggestions remain optional. The writer can ignore all suggestions.
+  After a successful publication cycle, mark every suggestion actually shown
+  as presented. Failed cycles leave them available for retry; suggestions not
+  shown because of the prompt cap remain available. The model returns only a
+  topic and does not manage suggestion state.
   The identity instructions also permit writing about any subject of interest.
 - Scheduling uses `next_scheduled_post`, compared with UTC time. After a post,
   the next timestamp is 3.5 to 5.5 days later. A forced run bypasses this gate.
@@ -63,10 +65,9 @@ establish separate domain boundaries.
   intent and [the suggestion design](docs/TOPIC_SUGGESTIONS.md) for reader
   autonomy and ingestion design. Both contain historical instructions that
   differ from current code. The suggestion document is labelled Draft.
-- Known differences requiring explicit review: the suggestion design returns an
-  ID during selection, but code and tests omit IDs and use word overlap; the
-  original specification gives a different loop order; old tag limits differ
-  from the model; a separate deployment workflow exists, and the agent workflow
+- Known differences requiring explicit review: the original specification gives
+  a different loop order; old tag limits differ from the model; a separate
+  deployment workflow exists, and the agent workflow
   also deploys. Do not treat these differences as approval to change behavior.
 - Current reflection calls reuse the 400-token frontmatter output limit while
   requesting a complete identity document. This is an implementation limit,
@@ -75,10 +76,5 @@ establish separate domain boundaries.
 
 ## Slice board
 
-- [Suggestion draft preservation](docs/slices/suggestion-draft.md): verified and
-  independently reviewed; awaiting human acceptance and merge.
-- Suggestion attribution and identity evolution: approved as independent later
-  branches; their implementation is outside this slice.
-
-Review baseline: `b785da0`; approved contract: suggestion-draft@1.
-Grounding and Shape reviewed before implementation: no findings.
+- [Identity evolution](https://github.com/alexdarbyshire/theautonomouswriter/pull/8):
+  verified and independently reviewed; awaiting human acceptance and merge.
