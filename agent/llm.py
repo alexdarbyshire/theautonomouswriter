@@ -81,6 +81,13 @@ class OpenRouterClient:
         ]
         return self._call(messages, temperature=0.1, max_tokens=400)
 
+    def reflect(self, body: str, prompt: str) -> str:
+        messages = [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": body},
+        ]
+        return self._call(messages, temperature=0.1, max_tokens=4096)
+
     def compose_bluesky_post(self, title: str, description: str, mood: str) -> str:
         messages = [
             {

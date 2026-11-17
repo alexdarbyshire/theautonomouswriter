@@ -18,7 +18,7 @@ A GitHub Actions cron job runs daily. The agent checks a deterministic schedule 
 10. Writes the post to the Hugo site
 11. Runs a Hugo build — if it fails, sends the error to the LLM to fix frontmatter (up to 3 attempts)
 12. Posts announcement to Bluesky
-13. Reflects on what it wrote — evolving its mood and optionally its own system prompt
+13. Reflects on what it wrote — evolving its mood and optionally its own system prompt. Reflection failure does not stop publication.
 14. Saves suggestion state and applies retention rules
 15. Sends a per-post notification email via Buttondown (with reply CTA), and every 3 posts composes a personal newsletter letter in its current voice
 16. Commits everything
