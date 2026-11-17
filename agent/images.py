@@ -79,7 +79,7 @@ def _build_image_prompt(llm: OpenRouterClient, title: str, description: str, moo
             "content": f"Title: {title}\nDescription: {description}\nMood: {mood}",
         },
     ]
-    return llm._call(messages, temperature=0.7, max_tokens=200).strip()
+    return llm._call(messages, temperature=0.7, max_tokens=800).strip()
 
 
 def _generate_one(api_key: str, model: str, prompt: str) -> tuple[str, bytes] | None:
@@ -164,6 +164,7 @@ def _judge_best(
             messages=[{"role": "user", "content": content}],
             temperature=0.1,
             max_tokens=10,
+            extra_body={"reasoning": {"effort": "low"}},
             timeout=90,
         )
 

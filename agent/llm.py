@@ -38,6 +38,7 @@ class OpenRouterClient:
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
+                    extra_body={"reasoning": {"effort": "low"}},
                     timeout=self.timeout,
                 )
                 return response.choices[0].message.content
@@ -65,7 +66,7 @@ class OpenRouterClient:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ]
-        return self._call(messages, temperature=0.8, max_tokens=2500)
+        return self._call(messages, temperature=0.8, max_tokens=6000)
 
     def select_topic(self, system_prompt: str, user_prompt: str) -> str:
         messages = [
@@ -141,7 +142,7 @@ class OpenRouterClient:
                 "content": (f"Your current mood: {mood}\n{reflections_block}\n\nRecent posts:\n{post_list}"),
             },
         ]
-        return self._call(messages, temperature=0.8, max_tokens=1000)
+        return self._call(messages, temperature=0.8, max_tokens=3000)
 
     def fix_frontmatter(self, current_frontmatter: str, hugo_error: str) -> str:
         messages = [
@@ -178,6 +179,7 @@ class OpenRouterClient:
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
+                    extra_body={"reasoning": {"effort": "low"}} if model is None else None,
                     timeout=self.timeout,
                 )
                 content = response.choices[0].message.content
@@ -291,7 +293,7 @@ class OpenRouterClient:
             },
             {"role": "user", "content": f"A reader wrote:\n\n{reader_message}"},
         ]
-        content, usage = self._call_with_usage(messages, temperature=0.8, max_tokens=800)
+        content, usage = self._call_with_usage(messages, temperature=0.8, max_tokens=2000)
         return content.strip(), usage
 
     def compose_reply(self, writer_identity: str, thread_context: str, mood: str) -> tuple[str, UsageDict]:
