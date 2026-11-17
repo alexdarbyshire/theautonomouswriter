@@ -65,7 +65,7 @@ class OpenRouterClient:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ]
-        return self._call(messages, temperature=0.8, max_tokens=2500)
+        return self._call(messages, temperature=0.8, max_tokens=6000)
 
     def select_topic(self, system_prompt: str, user_prompt: str) -> str:
         messages = [
