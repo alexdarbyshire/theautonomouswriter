@@ -98,6 +98,7 @@ def test_reflection_has_separate_output_allowance(monkeypatch):
     reflection_request = sdk.chat.completions.create.call_args.kwargs
     assert reflection_request["max_tokens"] == 4096
     assert reflection_request["temperature"] == 0.1
+    assert reflection_request["extra_body"] == {"reasoning": {"effort": "low"}}
     assert reflection_request["messages"] == [
         {"role": "system", "content": "Reflection instructions"},
         {"role": "user", "content": "Article body"},

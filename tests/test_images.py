@@ -96,6 +96,7 @@ class TestJudgeBest:
 
         result = _judge_best(llm, candidates, "Title", "Description")
         assert result == img_b
+        assert llm.client.chat.completions.create.call_args.kwargs["extra_body"] == {"reasoning": {"effort": "low"}}
 
     def test_falls_back_to_first_on_parse_error(self):
         llm = MagicMock()
