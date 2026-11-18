@@ -20,7 +20,7 @@ deployment contracts? Release and package metadata were checked on 2026-11-18.
   audit of its bundled JavaScript or dependencies.
 - Remove `peaceiris/actions-hugo`. Reviewing [3.3.0's installer](https://github.com/peaceiris/actions-hugo/blob/d1c81a15d4e6dca7086a17b9c2565cb70fd576bf/src/installer.ts)
   found no Hugo archive verification. Use a shell download with a fixed digest
-  from [Hugo 0.148.2's release metadata](https://api.github.com/repos/gohugoio/hugo/releases/tags/v0.148.2),
+  from [Hugo 0.170.1's release metadata](https://api.github.com/repos/gohugoio/hugo/releases/tags/v0.170.1),
   checked before extraction. It installs the same standard Linux amd64 edition.
 - Retain Microsoft's [Azure deployment action](https://github.com/Azure/static-web-apps-deploy/tree/1a947af9992250f3bc2e68ad0754c0b0c11566c9)
   at the current `v1` commit, `1a947af9992250f3bc2e68ad0754c0b0c11566c9`.
@@ -34,9 +34,9 @@ deployment contracts? Release and package metadata were checked on 2026-11-18.
 | Surface | Decision and evidence |
 | --- | --- |
 | Python | Keep 3.11 for the writer and CI, testing the declared minimum. [Python's lifecycle](https://devguide.python.org/versions/) supports it through October 2027; current stable is 3.15. |
-| Node | Keep 24 for form tests, as required by repository guidance. It remains supported; [Node's release schedule](https://nodejs.org/en/about/previous-releases) now lists 26 as the latest LTS. Action runtimes are separate from this test runtime. |
-| Hugo | Keep 0.148.2 across installation and both deployments. Latest stable is [0.170.1](https://github.com/gohugoio/hugo/releases/tag/v0.170.1), but [Azure issue 1720](https://github.com/Azure/static-web-apps/issues/1720) remains open. A local newer build does not establish Oryx compatibility. |
-| PaperMod | Keep `10d3dcc0e05cee0aaca58a1305a9d824b2cf9a2a`. Current [master at 1181196](https://github.com/adityatelange/hugo-PaperMod/commit/118119693d8b5ac211b939775678310973bcb232) requires Hugo 0.158.0 and fails with 0.148.2 (`Language.Direction` unavailable). Latest tagged release v8.0 predates the existing pin. |
+| Node | Use 26 for form tests, matching the latest LTS in [Node's release schedule](https://nodejs.org/en/about/previous-releases). Tested locally with 26.13.1. Action runtimes are separate from this test runtime. |
+| Hugo | Use current stable [0.170.1](https://github.com/gohugoio/hugo/releases/tag/v0.170.1) across installation and both deployments. Although [Azure issue 1720](https://github.com/Azure/static-web-apps/issues/1720) remains open, today's Azure image successfully downloads and builds this version through Oryx; see validation below. |
+| PaperMod | Keep `10d3dcc0e05cee0aaca58a1305a9d824b2cf9a2a`. The existing theme builds with Hugo 0.170.1, with deprecation warnings. Latest tagged release v8.0 predates this pin. Updating to current master would also introduce template and visual changes; retain the working theme for this maintenance PR. |
 | Azure Functions | Explicitly select `python:3.11` and pin SDK 1.26.0 and cryptography 50.0.2. [SWA configuration documentation](https://learn.microsoft.com/en-us/azure/static-web-apps/configuration#platform) lists 3.11. Its [API overview](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-functions) still stops at 3.10; use the configuration reference for the supported setting. [SDK 2.4.0](https://pypi.org/pypi/azure-functions/2.4.0/json) requires Python 3.13, beyond the documented managed runtime. Keep the Functions 4.x extension bundle. |
 
 ## Python packages
@@ -64,12 +64,19 @@ the resolved transitive packages and artifact hashes.
 ## Validation and limits
 
 - `uv sync --locked` succeeds with CI's uv 0.13.9 on Python 3.11.15.
-- 129 Python tests, Ruff lint/format checks and 10 Node 24 form tests pass.
+- 129 Python tests, Ruff lint/format checks and 10 Node 26.13.1 form tests pass.
 - Replacement Hugo install step succeeds and verifies the fixed digest. The
-  installed standard Hugo builds 79 pages with the retained PaperMod commit.
+  installed Hugo 0.170.1 builds 79 pages with the retained PaperMod commit.
 - All four workflow YAML files parse. Their roles, triggers, permissions,
   concurrency, writer state staging and feature flags are preserved.
 - Separate Python 3.11 API environment: SDK function discovery, unauthenticated
   rejection, text validation, encrypted dispatch and rate limiting pass offline.
-- Azure deployment, Oryx builds and hosted Functions startup were not run locally.
-  Those remain deployment checks. No live writer or paid model calls were run.
+- Azure image `mcr.microsoft.com/appsvc/staticappsclient:stable` resolved to digest
+  `sha256:026b202feacf67ec0acd4846a1d17953f6c3c8ff912a1c0ec29aa6000a495f12`.
+  In that image, Oryx `0.2.20260728.2` downloaded Hugo 0.170.1 and built the
+  existing site successfully (79 pages). Reproduction: mount `site/` read-only,
+  copy it to `/tmp/site`, and run `ENABLE_DYNAMIC_INSTALL=true oryx build
+  /tmp/site -o /tmp/site-output --platform hugo --platform-version 0.170.1`.
+- This image digest records test evidence; workflows continue using Microsoft's
+  normal image channel. No deployment, hosted Functions startup, live writer or
+  paid model calls were run.

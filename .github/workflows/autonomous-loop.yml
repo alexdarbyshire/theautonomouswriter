@@ -41,8 +41,8 @@ jobs:
       - name: Install Hugo
         run: |
           curl --fail --location --retry 3 --output "$RUNNER_TEMP/hugo.tar.gz" \
-            https://github.com/gohugoio/hugo/releases/download/v0.148.2/hugo_0.148.2_linux-amd64.tar.gz
-          echo "b2fbef73c965ff439ccca0bdf15d7ca64f59363d62916326e24d5552e6968aa3  $RUNNER_TEMP/hugo.tar.gz" | sha256sum --check
+            https://github.com/gohugoio/hugo/releases/download/v0.170.1/hugo_0.170.1_linux-amd64.tar.gz
+          echo "841a5462853aefc9942e4de1e8a5d75584b6a5181941e6ad3f1d745190e03cd8  $RUNNER_TEMP/hugo.tar.gz" | sha256sum --check
           mkdir -p "$RUNNER_TEMP/hugo-bin"
           tar -xzf "$RUNNER_TEMP/hugo.tar.gz" -C "$RUNNER_TEMP/hugo-bin" hugo
           echo "$RUNNER_TEMP/hugo-bin" >> "$GITHUB_PATH"
@@ -88,7 +88,7 @@ jobs:
         if: steps.commit.outputs.has_changes == 'true'
         uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9 # v1
         env:
-          HUGO_VERSION: 0.148.2
+          HUGO_VERSION: 0.170.1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ZEALOUS_WATER_001FE8510 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
