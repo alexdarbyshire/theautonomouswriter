@@ -1,6 +1,8 @@
+import base64
 import json
 from datetime import UTC, datetime
 from functools import partial
+from io import BytesIO
 from types import SimpleNamespace
 
 import pytest
@@ -67,6 +69,8 @@ def writer_run(tmp_path, monkeypatch):
             if state.failure == "selection":
                 raise LLMUnavailableError("selection unavailable")
             content = state.selection
+        elif "visual prompt engineer" in messages[0]["content"]:
+            content = "A quiet landscape"
         elif messages[0]["content"] == "Extract frontmatter.":
             content = json.dumps(
                 {
@@ -169,3 +173,37 @@ def test_no_safe_suggestions_allows_independent_topic(writer_run):
     main.main()
     assert "conscious dreaming" not in writer_run.prompts[0]
     assert load_suggestions(writer_run.suggestion_path)["suggestions"][0]["status"] == "screened_unsafe"
+
+
+@pytest.mark.parametrize(
+    ("data", "extension"),
+    [
+        (b"\x89PNG\r\n\x1a\n" + b"image", "png"),
+        (b"\xff\xd8\xff" + b"image", "jpg"),
+        (b"RIFF" + b"0000" + b"WEBPimage", "webp"),
+        (None, None),
+    ],
+)
+def test_main_persists_cover_original_format_or_flat_post(writer_run, monkeypatch, data, extension):
+    monkeypatch.setenv("ENABLE_IMAGES", "true")
+
+    def respond(request, timeout):
+        model = json.loads(request.data)["model"]
+        response = {}
+        if data is not None and model == "microsoft/mai-image-2.7":
+            response = {"data": [{"b64_json": base64.b64encode(data).decode()}]}
+        return BytesIO(json.dumps(response).encode())
+
+    monkeypatch.setattr("urllib.request.urlopen", respond)
+    main.main()
+    if data is None:
+        posts = list(main.POSTS_DIR.glob("*.md"))
+        assert len(posts) == 1
+        assert "cover:" not in posts[0].read_text()
+    else:
+        posts = list(main.POSTS_DIR.glob("*/index.md"))
+        assert len(posts) == 1
+        cover = posts[0].parent / "images" / f"cover.{extension}"
+        assert cover.read_bytes() == data
+        assert f"images/cover.{extension}" in posts[0].read_text()
+        assert list(cover.parent.iterdir()) == [cover]
