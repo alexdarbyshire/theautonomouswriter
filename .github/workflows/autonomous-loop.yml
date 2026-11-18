@@ -22,23 +22,31 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           submodules: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.9'
+          checksum: a7fbaff2b9a271d85c1bdb540941090fd1ce011797b4abeb48e4dcd39c2471d5
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.11'
 
       - name: Install Hugo
-        uses: peaceiris/actions-hugo@v3  # TODO: no Node 24 version yet, will be force-migrated June 2026
-        with:
-          hugo-version: '0.148.2'
+        # Verify a fixed upstream archive without adding a third-party installer action.
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/hugo.tar.gz" \
+            https://github.com/gohugoio/hugo/releases/download/v0.170.1/hugo_0.170.1_linux-amd64.tar.gz
+          echo "841a5462853aefc9942e4de1e8a5d75584b6a5181941e6ad3f1d745190e03cd8  $RUNNER_TEMP/hugo.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/hugo-bin"
+          tar -xzf "$RUNNER_TEMP/hugo.tar.gz" -C "$RUNNER_TEMP/hugo-bin" hugo
+          echo "$RUNNER_TEMP/hugo-bin" >> "$GITHUB_PATH"
 
       - name: Install dependencies
         run: uv sync
@@ -79,9 +87,9 @@ jobs:
 
       - name: Deploy to Azure Static Web Apps
         if: steps.commit.outputs.has_changes == 'true'
-        uses: Azure/static-web-apps-deploy@v1
+        uses: Azure/static-web-apps-deploy@1a947af9992250f3bc2e68ad0754c0b0c11566c9 # v1
         env:
-          HUGO_VERSION: 0.148.2
+          HUGO_VERSION: 0.170.1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ZEALOUS_WATER_001FE8510 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}

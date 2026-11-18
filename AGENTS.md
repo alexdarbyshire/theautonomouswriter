@@ -54,7 +54,7 @@ uv run ruff format --check agent/ tests/
 node tests/test_suggestion_form.cjs
 ```
 
-CI runs the suggestion form tests with Node.js 24.
+CI runs the suggestion form tests with Node.js 26.
 
 For a site change, run `hugo` from `site/`; use `hugo server` there for a local
 preview. Before committing Python changes, run Ruff fixes and formatting for
