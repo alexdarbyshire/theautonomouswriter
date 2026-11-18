@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -204,7 +206,7 @@ def main() -> None:
     logger.info("All validation checks passed")
 
     # 7b. Cover image generation (feature-flagged, non-critical)
-    cover_image_bytes = generate_cover_image(
+    cover_image = generate_cover_image(
         llm,
         frontmatter_data["title"],
         frontmatter_data["description"],
@@ -215,15 +217,15 @@ def main() -> None:
     date_str = frontmatter_data["date"]
     POSTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    if cover_image_bytes:
-        # Page bundle: directory with index.md + images/cover.png
+    if cover_image:
+        # Page bundle with the original cover format.
         post_dir = POSTS_DIR / f"{date_str}-{slug}"
         post_dir.mkdir(parents=True, exist_ok=True)
         post_path = post_dir / "index.md"
         img_dir = post_dir / "images"
         img_dir.mkdir(exist_ok=True)
-        (img_dir / "cover.png").write_bytes(cover_image_bytes)
-        logger.info("Cover image saved (%d bytes)", len(cover_image_bytes))
+        (img_dir / f"cover.{cover_image.extension}").write_bytes(cover_image.data)
+        logger.info("Cover image saved (%d bytes)", len(cover_image.data))
     else:
         # Flat file (existing behavior)
         post_path = POSTS_DIR / f"{date_str}-{slug}.md"
@@ -238,9 +240,9 @@ def main() -> None:
         "tags": frontmatter_data["tags"],
         "draft": False,
     }
-    if cover_image_bytes:
+    if cover_image:
         fm["cover"] = {
-            "image": "images/cover.png",
+            "image": f"images/cover.{cover_image.extension}",
             "alt": frontmatter_data["description"],
         }
     # json.dumps handles all escaping; YAML is a superset of JSON

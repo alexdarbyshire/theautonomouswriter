@@ -76,4 +76,5 @@ establish separate domain boundaries.
 
 ## Slice board
 
-No active slices.
+- [Cover model upgrade](docs/slices/cover-model-upgrade.md): verified and ready
+  for PR review; human acceptance remains pending.
