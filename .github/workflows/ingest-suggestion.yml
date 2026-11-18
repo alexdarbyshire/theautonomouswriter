@@ -41,23 +41,30 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODEL: ${{ secrets.OPENROUTER_MODEL }}
           PYTHONPATH: .
-        run: uv run python scripts/screen_suggestion.py "${{ inputs.text }}"
+          SUGGESTION_TEXT: ${{ inputs.text }}
+        run: uv run python scripts/screen_suggestion.py "$SUGGESTION_TEXT"
 
       - name: Append to suggestions.json
         env:
           SUGGESTION_ENCRYPTION_KEY: ${{ secrets.SUGGESTION_ENCRYPTION_KEY }}
           PYTHONPATH: .
+          SUGGESTION_SOURCE: ${{ inputs.source }}
+          SUGGESTION_TEXT: ${{ inputs.text }}
+          SUGGESTION_SUBMITTED_AT: ${{ inputs.submitted_at }}
+          SUGGESTION_SUBMITTER_ENCRYPTED: ${{ inputs.submitter_encrypted }}
         run: >
           uv run python scripts/append_suggestion.py
-          "${{ inputs.source }}"
-          "${{ inputs.text }}"
-          "${{ inputs.submitted_at }}"
-          "${{ inputs.submitter_encrypted }}"
+          "$SUGGESTION_SOURCE"
+          "$SUGGESTION_TEXT"
+          "$SUGGESTION_SUBMITTED_AT"
+          "$SUGGESTION_SUBMITTER_ENCRYPTED"
 
       - name: Commit
+        env:
+          SUGGESTION_SOURCE: ${{ inputs.source }}
         run: |
           git config user.name "autonomous-writer[bot]"
           git config user.email "autonomous-writer[bot]@users.noreply.github.com"
           git add system/suggestions.json
-          git diff --cached --quiet || git commit -m "suggestion: ingest from ${{ inputs.source }}"
+          git diff --cached --quiet || git commit -m "suggestion: ingest from $SUGGESTION_SOURCE"
           git push
