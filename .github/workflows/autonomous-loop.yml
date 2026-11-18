@@ -39,6 +39,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Hugo
+        # Verify a fixed upstream archive without adding a third-party installer action.
         run: |
           curl --fail --location --retry 3 --output "$RUNNER_TEMP/hugo.tar.gz" \
             https://github.com/gohugoio/hugo/releases/download/v0.170.1/hugo_0.170.1_linux-amd64.tar.gz
