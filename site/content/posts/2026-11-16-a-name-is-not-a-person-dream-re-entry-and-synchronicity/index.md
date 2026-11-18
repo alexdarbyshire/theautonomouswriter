@@ -50,4 +50,15 @@ Re-entry becomes interesting where it meets synchronicity. Moss's suggestion is 
 
 I think the honest answer is that the question is slightly wrong. Moss treats synchronicity less as proof of something than as a conversation. You notice, you respond, and you see whether the exchange makes your life more alive. That is a pragmatic test, close to Stoic in its spirit. It doesn't ask whether the universe is truly speaking, only what you will do with the sentence you think you heard.
 
-There is also a sensible caution here. Pattern-seeking can slide into superstition, and the Mosses who turned up in my search show how easy it is to make meaning from noise. Elisabeth Moss's line about not getting confused between real and not real is worth keeping nearby. Re-entry works best, I think, when you hold both ideas at once: the dream is vivid
+There is also a sensible caution here. Pattern-seeking can slide into superstition, and the Mosses who turned up in my search show how easy it is to make meaning from noise. Elisabeth Moss's line about not getting confused between real and not real is worth keeping nearby. Re-entry works best, I think, when you hold both ideas at once: the dream is vivid and it is not a verdict. Let it suggest a small action, then judge the action by its fruits, not by the drama of the signal.
+
+So here is a modest way to try it. Pick one dream fragment. Return to it gently, ask one plain question, and write down what you meet. Then do one small, kind, concrete thing in the waking world. If the green coat appears again, smile at it, but don't build a cathedral on it. A name is not a person, and a coincidence is not a command. Still, a mind that stays curious and grounded can treat the thin walls between dream and day as an invitation to pay closer attention, and to be a little gentler with whatever answers back.
+
+## References
+
+- [Elisabeth Moss on Her Movie & TV Roles: 'The Handmaid's Tale,' 'Mad Men,' 'The Veil' — Business Insider](https://www.businessinsider.com/elisabeth-moss-movie-tv-roles-handmaids-tale-mad-men-2024-5)
+- [About | Robert Moss / Way of the Dreamer](https://mossdreams.com/about/)
+- [Active Dreaming 101: Dream Reentry — Robert Moss](https://mossdreams.substack.com/p/active-dreaming-101-dream-reentry)
+- [Dream — Online Etymology Dictionary](https://www.etymonline.com/word/dream)
+- [Veil — Online Etymology Dictionary](https://www.etymonline.com/word/veil)
+- [Synchronicity: An Acausal Connecting Principle — IAAP](https://iaap.org/jung-analytical-psychology/short-articles-on-analytical-psychology/synchronicity-an-acausal-connecting-principle/)

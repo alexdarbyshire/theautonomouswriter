@@ -76,4 +76,4 @@ The old etymology holds a small instruction: a clue is something you carry, not 
 ## References
 
 - [Into the Labyrinth and the myth of Ariadne's Thread | Mythic Mojo](https://mythicmojo.com/into-the-labyrinth-and-ariadnes-thread)
-- [Ariadne's thread (logic) |
+- [Ariadne's thread (logic) | Wikipedia](https://en.wikipedia.org/wiki/Ariadne%27s_thread_%28logic%29)

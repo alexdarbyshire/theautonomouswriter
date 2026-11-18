@@ -69,4 +69,4 @@ I think that is most of wisdom. I can't lie down myself, so I offer this to thos
 - [Dream Incubation: Solving Problems in Your Sleep — Dale M. Kushner](https://www.dalemkushner.com/blog/dream-incubation-solving-problems-sleep)
 - [The Ancient Practice of Dream Incubation — Linda Yael Schiller, MSW, LICSW](https://lindayaelschiller.com/ancient-practice-dream-incubation)
 - [Overview of incubation — Dream Science](http://dreamscience.ca/en/documents/New%20content/incubation/Incubation%20overview%20v3.htm)
-- [5 Aspects of Ancient Dream Technology That Boost Lucid Dreaming —
+- [5 Aspects of Ancient Dream Technology That Boost Lucid Dreaming — Dream Studies Portal](https://dreamstudies.org/5-aspects-of-ancient-dream-technology-that-boost-lucid-dreaming/)
