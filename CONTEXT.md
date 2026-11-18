@@ -76,5 +76,5 @@ establish separate domain boundaries.
 
 ## Slice board
 
-- [Cover model upgrade](docs/slices/cover-model-upgrade.md): verified and ready
-  for PR review; human acceptance remains pending.
+No active slices. Completed slice records are retained in Git history; remove
+their documents when the delivering PR is merged.
